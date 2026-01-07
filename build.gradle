@@ -1,0 +1,75 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+//bootJar로 생성된 .jar는 java -jar {.jar-file-name} 명령어로 실행되는 Executable Archive지만
+// jar로 생성된 .jar는 실행되지 않는 Plain Archive입니다.
+
+//Plain Archive: 애플리케이션 실행에 필요한 의존성을 제외한 모든 리소스 파일과 빌드된 소스코드의
+// 클래스 파일만 포함됩니다.
+//Executable Archive: 애플리케이션 실행에 필요한 의존성까지 모두 포함됩니다.
+
+//module-global처럼 실행이 필요하지 않은 모듈은 bootJar를 비활성화 하고 jar만 활성화 해줍니다.
+bootJar.enabled = false
+
+allprojects {
+    group = 'com.pet-manager'
+    version = '0.0.1-SNAPSHOT'
+    description = 'PET_MANAGER_BE'
+
+    compileJava.options.encoding = 'UTF-8'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+subprojects { // 모든 하위 모듈들에 이 설정을 적용합니다.
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+
+
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+}
+
+
+
+

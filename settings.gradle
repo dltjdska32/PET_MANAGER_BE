@@ -1,0 +1,6 @@
+rootProject.name = 'PET_MANAGER_BE'
+
+include 'module-auth'
+include 'module-chat'
+include 'module-feed'
+include 'module-global'
