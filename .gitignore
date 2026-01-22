@@ -39,7 +39,6 @@ out/
 
 *.yml
 
-
 *.env
 
 *.properties

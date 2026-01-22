@@ -13,6 +13,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.RestClientException;
 
 import javax.naming.AuthenticationException;
 import java.util.stream.Collectors;
@@ -35,6 +36,33 @@ public class BaseExceptionHandler {
         return Response.error(statusCode, code, msg);
     }
 
+
+    /// api 예외
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @ExceptionHandler(RestClientException.class)
+    public Response<String> handleRestClientException(RestClientException e) {
+
+        log.error("{}: {}", "API_ERR", e.getMessage());
+
+        String msg = "외부 API 호출 오류 발생";
+
+        return  Response.error(HttpStatus.INTERNAL_SERVER_ERROR, msg, msg);
+    }
+
+
+    /// 도메인 및 잘못된 인자 예외 (illegalArgumentEx)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Response<String> handleIllegalArgumentException(IllegalArgumentException e) {
+
+        log.error("{}: {}", "DOMAIN_ETC_ERR", e.getMessage());
+
+        String msg = "도메인 및 잘못된 인자 오류 발생.";
+
+        String detailMsg = e.getMessage();
+
+        return  Response.error(HttpStatus.INTERNAL_SERVER_ERROR, msg, detailMsg);
+    }
 
 
     /// 권한 예외
