@@ -154,12 +154,21 @@ public class AuthService {
 
         SendOtpDto sendOtpDto = new SendOtpDto(dto.email(), otp);
 
+        /// otp 레디스에 저장. ttl 3분
+        otpAdapter.saveOtp(dto.email(), otp.getOtp());
+
         /// otp 발송
         javaMailSender.send(sendOtpDto);
     }
 
 
     public void validOtp(ValidateOtpDto dto) {
+
+        boolean valid = otpAdapter.isValid(dto.email(), dto.otp());
+
+        if(!valid) {
+            throw AuthException.badRequest("인증 번호가 올바르지 않거나 만료되었습니다.");
+        }
 
     }
 

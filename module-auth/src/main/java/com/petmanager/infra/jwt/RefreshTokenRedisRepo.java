@@ -1,4 +1,4 @@
-package com.petmanager.infra.redis;
+package com.petmanager.infra.jwt;
 
 import java.util.Optional;
 

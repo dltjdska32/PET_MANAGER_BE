@@ -74,6 +74,7 @@ public class AuthController {
     public Response<Void> validEmail(@RequestBody @Valid ValidateOtpDto dto) {
 
         authService.validOtp(dto);
+
         return Response.ok();
     }
 

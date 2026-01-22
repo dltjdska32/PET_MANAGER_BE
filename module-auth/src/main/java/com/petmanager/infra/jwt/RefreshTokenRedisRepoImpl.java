@@ -1,4 +1,4 @@
-package com.petmanager.infra.redis;
+package com.petmanager.infra.jwt;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,9 +40,10 @@ public class RefreshTokenRedisRepoImpl implements RefreshTokenRedisRepo {
     public Optional<Long> findUserId(String token) {
 
         String key = createKey(token);
-        Object userId = redisTemplate.opsForValue().get(key);
+        String userId = (String) redisTemplate.opsForValue().get(key);
 
-        return Optional.of(Long.valueOf(String.valueOf(userId)));
+        return Optional.ofNullable(userId)
+                .map(Long::valueOf);
     }
 
 

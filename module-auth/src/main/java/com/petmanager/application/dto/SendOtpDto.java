@@ -14,7 +14,7 @@ public class SendOtpDto extends SimpleMailMessage {
     private String toEmail;
     private OtpDto otp;
 
-    @Value("")
+    @Value("${spring.mail.username}")
     private String fromEmail;
 
     public SendOtpDto (String toEmail, OtpDto otp) {

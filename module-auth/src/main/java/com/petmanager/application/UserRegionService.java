@@ -1,6 +1,6 @@
 package com.petmanager.application;
 
-import com.petmanager.application.dto.DeleteUserRegionReqDto;
+
 import com.petmanager.application.dto.SaveUserRegionReqDto;
 import com.petmanager.application.exception.AuthException;
 import com.petmanager.domain.User;
@@ -9,9 +9,7 @@ import com.petmanager.domain.repo.UserRegionRepo;
 import com.petmanager.entity.Region;
 import com.petmanager.entity.Regions;
 import com.petmanager.exception.RegionException;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

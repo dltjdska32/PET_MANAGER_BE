@@ -1,7 +1,6 @@
-package com.petmanager.infra.redis.port;
+package com.petmanager.infra.jwt;
 
 import com.petmanager.application.adapter.JwtAdapter;
-import com.petmanager.infra.redis.RefreshTokenRedisRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
