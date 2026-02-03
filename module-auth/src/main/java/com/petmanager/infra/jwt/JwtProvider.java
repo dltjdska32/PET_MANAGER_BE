@@ -85,27 +85,7 @@ public class JwtProvider {
                 .compact();
     }
 
-    /**
-     * 토큰 유효성 검사 (게이트웨이에서 검증)
-     */
-//    public void validateJwt(String token) {
-//        try {
-//            Jwts.parser()
-//                    .verifyWith(secretKey)
-//                    .build()
-//                    .parseSignedClaims(token);
-//        } catch (SecurityException | MalformedJwtException e) {
-//            throw JwtException.jwtInvalidMalformedEx("잘못된 JWT 서명입니다.");
-//        } catch (ExpiredJwtException e) {
-//            throw JwtException.jwtExpiredEx("만료된 JWT 토큰입니다.");
-//        } catch (UnsupportedJwtException e) {
-//            throw JwtException.jwtUnsupportedEx("지원되지 않는 JWT 토큰입니다.");
-//        } catch (IllegalArgumentException e) {
-//            throw JwtException.jwtClaimEmptyEx("JWT 토큰이 잘못되었습니다.");
-//        } catch (Exception e) {
-//            throw JwtException.jwtInvalidEx("유효하지 않은 JWT 토큰입니다.");
-//        }
-//    }
+
 
     /**
      * refreshToken을 쿠키에 저장 - 앱일경우 사용 x

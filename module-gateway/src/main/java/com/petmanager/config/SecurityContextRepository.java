@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class SecurityContextRepository implements ServerSecurityContextRepository {
 
-    private final AuthenticationManager authenticaotinManager;
+    private final AuthenticationManager authManager;
 
     @Override
     public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
@@ -27,9 +27,9 @@ public class SecurityContextRepository implements ServerSecurityContextRepositor
         return Mono.justOrEmpty(exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
                 .filter(authHeader -> authHeader.startsWith("Bearer "))
                 .flatMap(authHeader -> {
-                    String authToken = authHeader.substring(7);
+                    String authToken = authHeader.substring(0,7);
                     Authentication auth = new UsernamePasswordAuthenticationToken(authToken, authToken);
-                    return authenticationManager.authenticate(auth).map(SecurityContextImpl::new);
+                    return authManager.authenticate(auth).map(SecurityContextImpl::new);
                 });
     }
 }

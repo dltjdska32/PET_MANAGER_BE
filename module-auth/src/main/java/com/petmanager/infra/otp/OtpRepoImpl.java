@@ -1,8 +1,10 @@
 package com.petmanager.infra.otp;
 
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
+
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
@@ -11,9 +13,9 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class OtpRepoImpl implements OtpRepo {
 
-    private static final String OTP_PREFIX = "OTP:";
+    private static final String OTP_PREFIX = "OTP-KEY:";
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Value("${spring.mail.properties.ttl}")
     private Long ttl;
@@ -21,8 +23,8 @@ public class OtpRepoImpl implements OtpRepo {
     @Override
     public void saveOtp(String email, String otp) {
 
-        String key = createkey(otp);
-        redisTemplate.opsForValue().set(key, email, Duration.ofSeconds(ttl));
+        String key = createkey(email);
+        stringRedisTemplate.opsForValue().set(key, otp, Duration.ofSeconds(ttl));
     }
 
     @Override
@@ -30,19 +32,19 @@ public class OtpRepoImpl implements OtpRepo {
 
         boolean result = false;
 
-        String key = createkey(otp);
+        String key = createkey(email);
 
-        String userEmail = (String) redisTemplate.opsForValue().get(key);
+        String val = stringRedisTemplate.opsForValue().get(key);
 
-        if(userEmail != null && userEmail.equals(email)){
+        if(val != null && val.equals(otp)){
             result = true;
         }
 
         return result;
     }
 
-    private String createkey(String otp) {
-        return OTP_PREFIX + otp;
+    private String createkey(String email) {
+        return OTP_PREFIX + email;
     }
 }
 

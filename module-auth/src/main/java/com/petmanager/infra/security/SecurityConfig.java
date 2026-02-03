@@ -72,6 +72,8 @@ public class SecurityConfig {
             formLogin.disable();
         });
 
+
+
         httpSecurity.csrf((auth) ->
                 auth.disable()
         );
