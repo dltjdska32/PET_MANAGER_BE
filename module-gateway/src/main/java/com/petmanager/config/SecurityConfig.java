@@ -14,18 +14,37 @@ public class SecurityConfig {
 
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+    private final static String[] WHITE_LIST = {
+            "api/auth/login/**",
+            "api/auth/join/**",
+            "api/auth/email/otp/**",
+            "api/auth/reissue/**",
+            "/actuator/**"
+    };
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+
+
+
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .authenticationManager(authenticationManager)
                 .securityContextRepository(securityContextRepository)
+                .exceptionHandling(exceptionHandlingSpec ->
+                    /// 예외 처리 핸들러 변경
+                    ///  커스텀한 jwt인증/인가 헨들러로 변경
+                    exceptionHandlingSpec
+                            .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                            .accessDeniedHandler(jwtAccessDeniedHandler)
+                )
                 .authorizeExchange(exchanges -> exchanges
-                        // 인증 없이 접근 가능한 경로 설정 (로그인, 회원가입 등)
-                        .pathMatchers("/auth/login/**", "/auth/join/**", "/actuator/**").permitAll()
+                        .pathMatchers(WHITE_LIST).permitAll()
                         .anyExchange().authenticated()
                 )
                 .build();

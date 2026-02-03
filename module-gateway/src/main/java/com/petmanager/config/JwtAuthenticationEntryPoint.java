@@ -42,8 +42,8 @@ public class JwtAuthenticationEntryPoint implements ServerAuthenticationEntryPoi
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         Response<Void> errResp = Response.error(
-                HttpStatus.FORBIDDEN,
-                "JWT_INVALID_ERR",
+                HttpStatus.UNAUTHORIZED,
+                "JWT_AUTH_ERR",
                 "로그인 후에 이용해주세요."
         );
 
