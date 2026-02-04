@@ -9,7 +9,7 @@ import java.util.Map;
 
 /// 카카오 반환타입
 /// {
-///     "id":123456789,
+///     "id":123456789,   -> long type
 ///     "connected_at": "2022-04-11T01:45:28Z",
 ///     "kakao_account": {
 ///         "profile": {
@@ -36,7 +36,7 @@ public class KakaoUserInfo implements OAuth2UserInfo {
 
     @Override
     public String getProviderId() {
-        return (String) attributes.get("id");
+        return String.valueOf(attributes.get("id"));
     }
 
     @Override

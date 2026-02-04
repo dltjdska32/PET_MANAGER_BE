@@ -1,12 +1,13 @@
 ext {
-    set('springCloudVersion', "2024.0.0")
+    set('springCloudVersion', "2025.0.0")
 }
 
+
 dependencies {
-    // 주의: module-global은 MVC 의존성이 강하므로 여기서는 사용하지 않음 (엔티티 등 필요시 분리 필요)
+    // module-global은 MVC여서 여기서는 사용하지 않음
     // implementation project(':module-global')
 
-    implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive' // Reactive Redis
     

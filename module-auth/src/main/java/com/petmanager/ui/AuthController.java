@@ -159,7 +159,7 @@ public class AuthController {
       )
     @PostMapping("/login/{provider}/callback")
     public Response<TokenRespDto> appCallback(@PathVariable Provider provider,
-                                              @RequestParam @Valid SocialLoginDto reqDto) {
+                                              @RequestBody @Valid SocialLoginDto reqDto) {
 
         TokenRespDto respDto = authService.handleAppCallback(provider, reqDto.token());
 

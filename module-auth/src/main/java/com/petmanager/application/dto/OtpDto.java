@@ -15,7 +15,7 @@ public class OtpDto {
 
     public static OtpDto createOtp(){
 
-        String otp = UUID.randomUUID().toString();
+        String otp = UUID.randomUUID().toString().substring(0, 6);
         return new OtpDto(otp);
     }
 }

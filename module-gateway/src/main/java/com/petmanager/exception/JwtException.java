@@ -39,4 +39,8 @@ public class JwtException extends BaseException {
     public static JwtException accessDeniedEx(String message) {
         return new JwtException(HttpStatus.FORBIDDEN, "JWT_ERR_07", message);
     }
+
+    public static JwtException serverEx(String message) {
+        return new JwtException(HttpStatus.INTERNAL_SERVER_ERROR, "JWT_ERR_08" , message);
+    }
 }

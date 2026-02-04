@@ -8,7 +8,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 @SpringBootApplication
 @EntityScan(basePackages = {
-        "com.petmanager.domain",
+        "com.petmanager.domain",      // module-auth의 엔티티
+        "com.petmanager.entity"       // module-global의 공통 엔티티
 })
 public class ChatApplication {
 

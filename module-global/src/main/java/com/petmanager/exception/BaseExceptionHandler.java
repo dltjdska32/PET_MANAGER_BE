@@ -102,7 +102,7 @@ public class BaseExceptionHandler {
     @ExceptionHandler(MissingRequestHeaderException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    public Response<Void> handleMissingHeaderEx(MissingRequestHeaderException e){
+    public Response<Void> handleMissingHeaderEx(MissingRequestHeaderException e) {
 
         log.error("{}: {}", "MISSING_HEADER_ERR", e.getMessage());
 

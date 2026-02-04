@@ -5,10 +5,15 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import com.petmanager.exception.JwtException;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
+
+import static com.petmanager.config.GlobalConst.*;
 
 @Component
 public class JwtUtil {
@@ -33,7 +38,6 @@ public class JwtUtil {
         }
     }
 
-
     /**
      * 토큰 유효성 검사 (게이트웨이에서 검증)
      */
@@ -56,12 +60,72 @@ public class JwtUtil {
         }
     }
 
+
+    /**
+     * Token Claims 가져오기
+     */
     public Claims getClaims(String token) {
-        return Jwts.parser()
+            return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+
+    /// 유저ID 확인
+    public Long getUserId(String token){
+
+        Claims claims = getClaims(token);
+
+        String userId = claims.getSubject();
+
+        if(userId == null){
+            throw JwtException.jwtClaimEmptyEx("JWT 유저 정보를 확인할 수 없음.");
+        }
+
+        return Long.parseLong(userId);
+    }
+
+
+    /// 유저롤 확인
+    public String getUserRole(String token){
+
+        Claims claims = getClaims(token);
+        String userRole = claims.get(JWT_CLAIM_ROLE, String.class);
+
+        if(userRole == null){
+            throw JwtException.jwtClaimEmptyEx("JWT 유저 정보를 확인할 수 없음.");
+        }
+
+        return userRole;
+    }
+
+
+    /// 유저email 확인
+    public String getUserEmail(String token){
+
+        Claims claims = getClaims(token);
+        String userEmail = claims.get(JWT_CLAIM_EMAIL, String.class);
+
+        if(userEmail == null){
+            throw JwtException.jwtClaimEmptyEx("JWT 유저 정보를 확인할 수 없음.");
+        }
+
+        return userEmail;
+    }
+
+    /// 유저네임 확인
+    public String getUsername(String token){
+
+        Claims claims = getClaims(token);
+        String username = claims.get(JWT_CLAIM_USERNAME, String.class);
+
+        if(username == null){
+            throw JwtException.jwtClaimEmptyEx("JWT 유저 정보를 확인할 수 없음.");
+        }
+
+        return username;
     }
 }
 

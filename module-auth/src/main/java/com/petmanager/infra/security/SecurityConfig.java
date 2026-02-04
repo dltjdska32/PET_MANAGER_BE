@@ -5,54 +5,38 @@ import com.petmanager.config.JwtAccessDeniedHandler;
 import com.petmanager.config.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 
+@Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)//secured 어노테이션, preAuthorize어노테이션 활성화
 public class SecurityConfig {
 
-    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final UserHeaderFilter userHeaderFilter;
 
+    private final CorsConfigurationSource corsConfigurationSource;
 
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(8);
-    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 
-        httpSecurity.authorizeHttpRequests((auth) -> {
-
-            auth
-                    // /auth 요청 허용
-                    .requestMatchers("/api/auth/**", "/login/**", "/join/**").permitAll()
-                    // 정적 리소스
-                    .requestMatchers("/css/**", "/images/**", "/js/**", "/favicon.ico").permitAll()
-                    //  Swagger 관련 경로
-                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                    // 나머지는 로그인 필수 (세부 권한은 @PreAuthorize로)
-                    .anyRequest().authenticated();
-        });
-
+        /// 검증은 게이트웨이에서
+        httpSecurity.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         /// jwt 설정 추가
         httpSecurity.addFilterBefore(userHeaderFilter, UsernamePasswordAuthenticationFilter.class);
 
-        /// 403 , 401 에러 설정 추가
-        httpSecurity.exceptionHandling(conf -> conf
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                .accessDeniedHandler(jwtAccessDeniedHandler)
-        );
+        /// 8080 게이트웨이에서오는 요청 cors설정
+        httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource));
 
         //세션 사용 x
         httpSecurity.sessionManagement((session) -> {
@@ -81,5 +65,7 @@ public class SecurityConfig {
 
         return httpSecurity.build();
     }
+
+
 
 }

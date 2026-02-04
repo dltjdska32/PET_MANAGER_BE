@@ -3,16 +3,14 @@ package com.petmanager.application;
 
 import com.petmanager.application.dto.CreateOriginUserDto;
 import com.petmanager.application.dto.OriginLoginReqDto;
-import com.petmanager.application.dto.SaveUserRegionReqDto;
 import com.petmanager.application.exception.AuthException;
 import com.petmanager.domain.User;
 import com.petmanager.domain.repo.UserRepo;
 import com.petmanager.infra.oauth.OAuth2UserInfo;
-import com.petmanager.infra.security.PassEncoder;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +22,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepo userRepo;
-    private final PassEncoder passEncoder;
+    private final PasswordEncoder passwordEncoder;
 
 
     public User login(OriginLoginReqDto reqDto) {
@@ -32,7 +30,7 @@ public class UserService {
         User user = userRepo.findByUsername(reqDto.username())
                 .orElseThrow(() -> AuthException.badRequest("아이디 또는 비밀번호가 틀렸습니다."));
 
-        user.isValidPassword(reqDto.password(), passEncoder.passEncoder());
+        user.isValidPassword(reqDto.password(), passwordEncoder);
 
         return user;
     }
@@ -44,6 +42,7 @@ public class UserService {
 
         Optional<User> foundUser = userRepo.findByUsername(user.getUsername());
 
+        /// 저장된 유저가 없을경우 저장하고 유저 반환
         return foundUser.orElseGet(() -> userRepo.save(user));
     }
 
@@ -56,7 +55,7 @@ public class UserService {
             throw AuthException.badRequest("이미 존재하는 아이디 입니다.");
         }
 
-        User user =  User.from(dto, passEncoder.passEncoder());
+        User user =  User.from(dto, passwordEncoder);
         return userRepo.save(user);
     }
 

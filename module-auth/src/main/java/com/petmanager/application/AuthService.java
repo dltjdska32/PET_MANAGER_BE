@@ -52,6 +52,7 @@ public class AuthService {
     }
 
 
+    @Transactional(readOnly = false)
     public TokenRespDto handleAppCallback(Provider provider, String token) {
 
         OAuthAdapter adapter = findOauthAdapter(provider);

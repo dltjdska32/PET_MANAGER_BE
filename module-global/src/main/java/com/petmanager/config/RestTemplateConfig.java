@@ -1,6 +1,7 @@
 package com.petmanager.config;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,10 +16,10 @@ import java.io.IOException;
 @Slf4j
 public class RestTemplateConfig {
 
-    @Value("${restTemplate.connect.timeout}")
+    @Value("${restTemplate.connectTimeout}")
     private int connTimeout;
 
-    @Value("${restTemplate.read.timeout}")
+    @Value("${restTemplate.readTimeout}")
     private int readTimeout;
 
     @Bean
