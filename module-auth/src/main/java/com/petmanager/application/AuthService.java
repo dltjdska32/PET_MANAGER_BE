@@ -173,6 +173,9 @@ public class AuthService {
 
     }
 
+    public void checkId(String username) {
+        userService.checkId(username);
+    }
 
     /// 어뎁터 확인.
     private OAuthAdapter findOauthAdapter(Provider provider) {
@@ -189,7 +192,6 @@ public class AuthService {
         jwtAdapter.saveRefreshToken(loginUser.getId(), tokenRespDto.refreshToken());
         return tokenRespDto;
     }
-
 
 
 

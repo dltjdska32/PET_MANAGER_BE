@@ -49,11 +49,7 @@ public class UserService {
 
     public User join(CreateOriginUserDto dto) {
 
-        boolean isExist = userRepo.existsUserByUsername(dto.username());
-
-        if(isExist) {
-            throw AuthException.badRequest("이미 존재하는 아이디 입니다.");
-        }
+        checkId(dto.username());
 
         User user =  User.from(dto, passwordEncoder);
         return userRepo.save(user);
@@ -66,4 +62,13 @@ public class UserService {
     }
 
 
+    public void checkId(String username) {
+
+
+        boolean isExist = userRepo.existsUserByUsername(username);
+
+        if(isExist) {
+            throw AuthException.badRequest("이미 존재하는 아이디 입니다.");
+        }
+    }
 }

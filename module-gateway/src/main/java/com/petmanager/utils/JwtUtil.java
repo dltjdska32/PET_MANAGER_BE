@@ -29,19 +29,19 @@ public class JwtUtil {
         secretKey = Keys.hmacShaKeyFor(bytes);
     }
 
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
+//    public boolean validateToken(String token) {
+//        try {
+//            Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
+//            return true;
+//        } catch (Exception e) {
+//            return false;
+//        }
+//    }
 
     /**
      * 토큰 유효성 검사 (게이트웨이에서 검증)
      */
-    public void validateJwt(String token) {
+    public void validateToken(String token) {
         try {
             Jwts.parser()
                     .verifyWith(secretKey)
@@ -65,7 +65,10 @@ public class JwtUtil {
      * Token Claims 가져오기
      */
     public Claims getClaims(String token) {
-            return Jwts.parser()
+
+        validateToken(token);
+
+        return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)

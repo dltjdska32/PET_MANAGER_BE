@@ -10,7 +10,7 @@ import java.util.List;
 
 
 public record CreateOriginUserDto (@NotBlank(message = "닉네임은 필수 입니다.")
-                                   @Length(min = 5, max = 30)
+                                   @Length(min = 5, max = 16)
                                    String nickName,
                                    @NotBlank(message = "아이디는 필수 입니다.")
                                    @Length(min = 5, max = 30)

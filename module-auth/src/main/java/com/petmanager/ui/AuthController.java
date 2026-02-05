@@ -39,9 +39,9 @@ public class AuthController {
     @PostMapping("/login")
     public Response<TokenRespDto> login(@RequestBody OriginLoginReqDto reqDto) {
 
-        authService.login(reqDto);
+        TokenRespDto token = authService.login(reqDto);
 
-        return Response.ok();
+        return Response.ok(token);
     }
 
     /// 기본회원가입
@@ -49,6 +49,17 @@ public class AuthController {
     public Response<Void> join(@RequestBody CreateOriginUserDto dto) {
 
         authService.join(dto);
+        return Response.ok();
+    }
+
+    @Operation(
+            summary = "아이디 중복 체크",
+            description = "유저 아이디 중복 체크"
+    )
+    @GetMapping("/exists/{username}")
+    public Response<Void> checkId(@PathVariable(name = "username") String username) {
+
+        authService.checkId(username);
         return Response.ok();
     }
 

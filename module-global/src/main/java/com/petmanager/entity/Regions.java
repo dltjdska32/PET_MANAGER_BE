@@ -320,7 +320,7 @@ public enum Regions {
 
         Optional<Regions> result = Optional.empty();
 
-        for (Regions regions : Regions.getAllSido()) {
+        for (Regions regions : Regions.getAllRegion()) {
 
             if (regions.getId().equals(id)) {
                 result = Optional.of(regions);
@@ -341,6 +341,12 @@ public enum Regions {
     public static Regions[] getSigunguBySido(Regions sido) {
         return java.util.Arrays.stream(values())
                 .filter(r -> r.isSigungu() && r.getParent() == sido)
+                .toArray(Regions[]::new);
+    }
+
+
+    public static Regions[] getAllRegion() {
+        return java.util.Arrays.stream(values())
                 .toArray(Regions[]::new);
     }
 }

@@ -94,8 +94,9 @@ public class User extends BaseEntity {
 
     public void isValidPassword(String inputPass, PasswordEncoder encoder){
 
-        if(!encoder.matches(this.password, encoder.encode(inputPass))){
-           throw new IllegalArgumentException("아이디 또는 비밀번호가 틀렸습니다.");
+
+        if (!encoder.matches(inputPass, this.password)) {
+            throw new IllegalArgumentException("아이디 또는 비밀번호가 틀렸습니다.");
         }
     }
 

@@ -2,6 +2,9 @@ package com.petmanager.config;
 
 import com.petmanager.exception.JwtException;
 import com.petmanager.utils.JwtUtil;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -40,29 +43,19 @@ public class UserInfoHeaderFilter implements GlobalFilter {
 
         String token = authHeader.substring(7);
 
-        try{
-            Long userId = jwtUtil.getUserId(token);
-            String userRole = jwtUtil.getUserRole(token);
-            String username = jwtUtil.getUsername(token);
-            String userEmail = jwtUtil.getUserEmail(token);
 
-            /// 헤더에 유저 정보 담아준다.
-            exchange.getRequest().getHeaders().set(X_USER_ID_COOKIE_KEY, userId.toString());
-            exchange.getRequest().getHeaders().set(X_USER_ROLE_COOKIE_KEY, userRole);
-            exchange.getRequest().getHeaders().set(X_USER_NAME_COOKIE_KEY, username);
-            exchange.getRequest().getHeaders().set(X_USER_EMAIL_COOKIE_KEY, userEmail);
+        Long userId = jwtUtil.getUserId(token);
+        String userRole = jwtUtil.getUserRole(token);
+        String username = jwtUtil.getUsername(token);
+        String userEmail = jwtUtil.getUserEmail(token);
 
-            return chain.filter(exchange);
-        } catch (JwtException e) {
+        /// 헤더에 유저 정보 담아준다.
+        exchange.getRequest().getHeaders().set(X_USER_ID_COOKIE_KEY, userId.toString());
+        exchange.getRequest().getHeaders().set(X_USER_ROLE_COOKIE_KEY, userRole);
+        exchange.getRequest().getHeaders().set(X_USER_NAME_COOKIE_KEY, username);
+        exchange.getRequest().getHeaders().set(X_USER_EMAIL_COOKIE_KEY, userEmail);
 
-            log.error("{}", e.getMessage());
-
-            /// gatewayFilter(리액티브 체인)에서는 throw로 에러를 던지면 안됨.
-            return Mono.error(e);
-        } catch (Exception e) {
-            log.error("알 수 없는 에러 발생 : {}", e.getMessage());
-            return Mono.error(JwtException.serverEx("JWT 파싱 중 알 수 없는 오류 발생"));
-        }
+        return chain.filter(exchange);
     }
 
 }

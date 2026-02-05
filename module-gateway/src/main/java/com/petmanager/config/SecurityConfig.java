@@ -23,6 +23,7 @@
                 "/api/auth/join/**",
                 "/api/auth/email/otp/**",
                 "/api/auth/reissue/**",
+                "/api/auth/exists/**",
 
                 // 각 모듈 Swagger UI & OpenAPI
                 "/api/auth/swagger-ui/**",
