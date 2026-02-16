@@ -20,12 +20,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
 import java.util.Arrays;
 
-import static com.petmanager.config.GlobalConst.REFRESH_TOKEN_COOKIE_KEY;
 
+
+import static com.petmanager.config.GlobalConst.REFRESH_TOKEN_COOKIE_KEY;
 
 @RestController
 @RequiredArgsConstructor
@@ -90,6 +90,33 @@ public class AuthController {
     }
 
 
+    /// 유저 조회
+    @Operation(
+            summary = "유저 내 정보 조회",
+            description = "유저가 내 정보 조회 (유저 닉네임, 이메일, 대표이미지, 지역아이디)"
+    )
+    @GetMapping("/user")
+    @PreAuthorize("hasRole('USER')")
+    public Response<UserInfoRespDto> getUserInfoByUser (@AuthenticationPrincipal BasicUserInfo user) {
+
+        UserInfoRespDto retVal = authService.getUserInfoByUserId(user.userId());
+
+        return Response.ok(retVal);
+    }
+
+    /// 유저 지역 설정
+    @Operation(
+            summary = "유저 지역 조회",
+            description = "유저가 설정한 지역 조회"
+    )
+    @GetMapping("/user/region")
+    @PreAuthorize("hasRole('USER')")
+    public Response<Void> getRegionByUser (@AuthenticationPrincipal BasicUserInfo user) {
+
+        authService.getUserRegion(user.userId());
+
+        return Response.ok();
+    }
 
     /// 유저 지역 설정
     @Operation(

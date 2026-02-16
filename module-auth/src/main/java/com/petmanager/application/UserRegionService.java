@@ -95,4 +95,9 @@ public class UserRegionService {
     }
 
 
+
+    public List<Long> findRegionIdByUserId(Long userId) {
+
+        return userRegionRepo.findRegionIdByUserId(userId);
+    }
 }

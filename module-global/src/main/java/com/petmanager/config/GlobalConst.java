@@ -1,6 +1,7 @@
 package com.petmanager.config;
 
 public abstract class GlobalConst {
+
     public static final String DEVICE_ID_HEADER_PREFIX = "device-id";
 
     public static final String AUTHORIZATION_HEADER = "Authorization";

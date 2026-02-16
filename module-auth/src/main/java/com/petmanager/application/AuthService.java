@@ -42,6 +42,9 @@ public class AuthService {
     }
 
 
+    public void getUserRegion(Long userId) {
+        userRegionService.findRegionIdByUserId(userId);
+    }
 
     /// 리다이렉트 url.
     public String getRedirectUrl(Provider provider) {
@@ -173,6 +176,14 @@ public class AuthService {
 
     }
 
+
+    public UserInfoRespDto getUserInfoByUserId(Long userId) {
+        UserInfoRespDto userInfoRespDto = UserInfoRespDto
+                .of(userService.findById(userId), userRegionService.findRegionIdByUserId(userId));
+
+        return userInfoRespDto;
+    }
+
     public void checkId(String username) {
         userService.checkId(username);
     }
@@ -192,7 +203,6 @@ public class AuthService {
         jwtAdapter.saveRefreshToken(loginUser.getId(), tokenRespDto.refreshToken());
         return tokenRespDto;
     }
-
 
 
 }
