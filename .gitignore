@@ -37,8 +37,13 @@ out/
 .vscode/
 
 
-*.yml
+# 민감한 설정 파일 (로컬 개발용)
+**/application-local.yml
+**/application-local.yaml
 
+# 환경 변수 파일
 *.env
+.env
 
+# Properties 파일
 *.properties

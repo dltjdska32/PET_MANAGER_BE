@@ -1,0 +1,69 @@
+version: '3.8'
+
+# Auth 서비스 독립 실행용
+services:
+  auth:
+    build:
+      context: ../  # 프로젝트 루트를 context로
+      dockerfile: module-auth/Dockerfile
+    container_name: pet-manager-auth
+    restart: always
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://pet-manager-mysql:3306/pet_manager_auth?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: lsn
+      SPRING_DATASOURCE_PASSWORD: petmanager3448!!
+
+      SPRING_DATA_REDIS_HOST: pet-manager-redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: petmanager3448!!
+    networks:
+      - pet-manager-network
+
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: pet-manager-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: petmanager3448!!
+      MYSQL_DATABASE: pet_manager_auth
+      MYSQL_USER: lsn
+      MYSQL_PASSWORD: petmanager3448!!
+      TZ: Asia/Seoul
+    ports:
+      - "3307:3306"  # 외부 포트를 3307로 변경 (Windows MySQL과 충돌 방지)
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=Asia/Seoul
+    networks:
+      - pet-manager-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: pet-manager-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass petmanager3448!!
+    volumes:
+      - redis_data:/data
+    networks:
+      - pet-manager-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  pet-manager-network:
+    driver: bridge
+

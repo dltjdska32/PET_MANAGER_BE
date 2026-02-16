@@ -1,0 +1,55 @@
+name: gateway-ci
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Set Tags Name'
+        required: true
+        default: master
+
+
+# runs on : 어떤 가상 머신에서 실행할지 설정
+#         -> 깃헙에서 호스팅하는 러너 머신중 특정 머신에서 우분투레이시트스로 실행
+# output : 특정값 반환
+# step1 : 쉘스크립트를 통해 v1.0.0 등의 이름을 v1-0-0등으로 변경
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.set-version.outputs.VERSION_NAME }}
+    #최소 1 ~ 의 스탭을 가짐
+    steps:
+      - id: set-version
+        run: |
+          echo "VERSION_NAME=$(echo "${{ github.event.inputs.tags }}" | sed "s/\./\-/g")" >> $GITHUB-OUTPUT
+
+      - name: Check Version Name
+        run: | 
+          echo "Check Version -> ${{ steps.set-version.outputs.VERSION_NAME }}"
+
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          ref: '${{ github.event.inputs.tags }}'
+
+      - name: Grant excute permission for gradlew
+        run: chmod +w gradlew
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: Build with Gradlew
+        run: ./gradlew clean test bootJar
+
+      - name: Add version
+        run: |
+          mv build/libs/PET_MANAGER_BE-0.0.1-SNAPSHOT-plain.jar build/libs/PET_MANAGER_BE_GATEWAY-${{ steps.set-version.outputs.VERSION_NAME }}.jar
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PET_MANAGER_GATEWAY
+          path: build/libs/PET_MANAGER_BE_GATEWAY-${{ steps.set-version.outputs.VERSION_NAME }}.jar
