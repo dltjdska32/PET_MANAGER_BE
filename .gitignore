@@ -41,9 +41,7 @@ out/
 **/application-local.yml
 **/application-local.yaml
 
-# 환경 변수 파일
+# 환경 변수 파일 (.env.example은 커밋됨 - 템플릿용)
 *.env
 .env
-
-# Properties 파일
-*.properties
+!**/.env.example

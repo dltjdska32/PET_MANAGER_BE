@@ -1,6 +1,7 @@
 version: '3.8'
 
 # Auth 서비스 독립 실행용
+# 민감정보는 .env 파일에 설정 (커밋되지 않음)
 services:
   auth:
     build:
@@ -15,12 +16,11 @@ services:
       - redis
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://pet-manager-mysql:3306/pet_manager_auth?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-      SPRING_DATASOURCE_USERNAME: lsn
-      SPRING_DATASOURCE_PASSWORD: petmanager3448!!
-
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-lsn}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATA_REDIS_HOST: pet-manager-redis
       SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_PASSWORD: petmanager3448!!
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
     networks:
       - pet-manager-network
 
@@ -30,10 +30,10 @@ services:
     container_name: pet-manager-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: petmanager3448!!
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: pet_manager_auth
-      MYSQL_USER: lsn
-      MYSQL_PASSWORD: petmanager3448!!
+      MYSQL_USER: ${MYSQL_USER:-lsn}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       TZ: Asia/Seoul
     ports:
       - "3307:3306"  # 외부 포트를 3307로 변경 (Windows MySQL과 충돌 방지)
@@ -53,7 +53,7 @@ services:
     restart: always
     ports:
       - "6379:6379"
-    command: redis-server --requirepass petmanager3448!!
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
     networks:
