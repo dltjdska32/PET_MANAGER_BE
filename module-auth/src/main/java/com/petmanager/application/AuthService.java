@@ -1,8 +1,8 @@
 package com.petmanager.application;
 
-import com.petmanager.application.adapter.JwtAdapter;
-import com.petmanager.application.adapter.OAuthAdapter;
-import com.petmanager.application.adapter.OtpAdapter;
+import com.petmanager.application.port.JwtPort;
+import com.petmanager.application.port.OAuthPort;
+import com.petmanager.application.port.OtpPort;
 import com.petmanager.application.dto.*;
 import com.petmanager.application.exception.AuthException;
 import com.petmanager.domain.User;
@@ -25,11 +25,11 @@ import java.util.List;
 public class AuthService {
 
     private final UserService userService;
-    private final List<OAuthAdapter> oAuthAdapters;
+    private final List<OAuthPort> oAuthPorts;
     private final UserRegionService userRegionService;
     private final JwtProvider jwtProvider;
-    private final JwtAdapter jwtAdapter;
-    private final OtpAdapter otpAdapter;
+    private final JwtPort jwtPort;
+    private final OtpPort otpPort;
     private final JavaMailSender javaMailSender;
 
     /// 일반 회원로그인
@@ -49,19 +49,19 @@ public class AuthService {
     /// 리다이렉트 url.
     public String getRedirectUrl(Provider provider) {
 
-        OAuthAdapter adapter = findOauthAdapter(provider);
+        OAuthPort port = findOauthPort(provider);
 
-        return adapter.getRedirectUri();
+        return port.getRedirectUri();
     }
 
 
     @Transactional(readOnly = false)
     public TokenRespDto handleAppCallback(Provider provider, String token) {
 
-        OAuthAdapter adapter = findOauthAdapter(provider);
+        OAuthPort port = findOauthPort(provider);
 
         //  엑세스토큰을 통해 유저 정보 조회
-        OAuth2UserInfo userInfo = adapter.getUserInfo(token);
+        OAuth2UserInfo userInfo = port.getUserInfo(token);
 
         // oauth 유저 저장.
         User user = userService.createOrGetOAuthUser(userInfo);
@@ -80,13 +80,13 @@ public class AuthService {
             throw AuthException.apiErr("인증 코드 반환 실패");
         }
 
-        OAuthAdapter adapter = findOauthAdapter(provider);
+        OAuthPort port = findOauthPort(provider);
 
         //  엑세스 토큰 반환
-        String oauthToken = adapter.getAccessToken(code);
+        String oauthToken = port.getAccessToken(code);
 
         //  엑세스토큰을 통해 유저 정보 조회
-        OAuth2UserInfo userInfo = adapter.getUserInfo(oauthToken);
+        OAuth2UserInfo userInfo = port.getUserInfo(oauthToken);
 
         // oauth 유저 저장.
         User user = userService.createOrGetOAuthUser(userInfo);
@@ -100,7 +100,7 @@ public class AuthService {
     ///  웹 및 앱 로그아웃
     public void logout(String refreshToken) {
 
-        jwtAdapter.deleteRefreshToken(refreshToken);
+        jwtPort.deleteRefreshToken(refreshToken);
     }
 
 
@@ -136,17 +136,17 @@ public class AuthService {
     ///  토큰 재발급.
     public TokenRespDto reissueToken(String refreshToken) {
 
-        Long userId = jwtAdapter.findUserId(refreshToken)
+        Long userId = jwtPort.findUserId(refreshToken)
                 .orElseThrow(() -> AuthException.unauthorized("토큰이 만료되었습니다. 재로그인이 필요합니다."));
 
         User user = userService.findById(userId);
 
         ///  refresh access 토큰 재발급
-        jwtAdapter.deleteRefreshToken(refreshToken);
+        jwtPort.deleteRefreshToken(refreshToken);
 
         TokenRespDto dto = TokenRespDto.of(user, jwtProvider);
 
-        jwtAdapter.saveRefreshToken(userId, dto.refreshToken());
+        jwtPort.saveRefreshToken(userId, dto.refreshToken());
 
         return dto;
     }
@@ -159,7 +159,7 @@ public class AuthService {
         SendOtpDto sendOtpDto = new SendOtpDto(dto.email(), otp);
 
         /// otp 레디스에 저장. ttl 3분
-        otpAdapter.saveOtp(dto.email(), otp.getOtp());
+        otpPort.saveOtp(dto.email(), otp.getOtp());
 
         /// otp 발송
         javaMailSender.send(sendOtpDto);
@@ -168,7 +168,7 @@ public class AuthService {
 
     public void validOtp(ValidateOtpDto dto) {
 
-        boolean valid = otpAdapter.isValid(dto.email(), dto.otp());
+        boolean valid = otpPort.isValid(dto.email(), dto.otp());
 
         if(!valid) {
             throw AuthException.badRequest("인증 번호가 올바르지 않거나 만료되었습니다.");
@@ -188,11 +188,10 @@ public class AuthService {
         userService.checkId(username);
     }
 
-    /// 어뎁터 확인.
-    private OAuthAdapter findOauthAdapter(Provider provider) {
-        return oAuthAdapters
+    private OAuthPort findOauthPort(Provider provider) {
+        return oAuthPorts
                 .stream()
-                .filter(auth -> auth.supoorts(provider)).findFirst()
+                .filter(port -> port.supoorts(provider)).findFirst()
                 .orElseThrow(() -> AuthException.serverErr("소셜 로그인 제공자 설정 오류 발생."));
     }
 
@@ -200,7 +199,7 @@ public class AuthService {
     private TokenRespDto createTokens(User loginUser) {
         TokenRespDto tokenRespDto = TokenRespDto.of(loginUser, jwtProvider);
         //리프레시 토큰 저장.
-        jwtAdapter.saveRefreshToken(loginUser.getId(), tokenRespDto.refreshToken());
+        jwtPort.saveRefreshToken(loginUser.getId(), tokenRespDto.refreshToken());
         return tokenRespDto;
     }
 

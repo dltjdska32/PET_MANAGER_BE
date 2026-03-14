@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface UserRegionRepo extends JpaRepository<UserRegion, Long> {
 
-    @Query("SELECT COUNT(*) " +
+    @Query("SELECT COUNT(ur) " +
             "FROM UserRegion ur " +
             "WHERE ur.user.id = :userId")
     Integer countByUserId(Long userId);

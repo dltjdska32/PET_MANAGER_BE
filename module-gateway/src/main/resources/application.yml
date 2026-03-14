@@ -5,21 +5,34 @@ spring:
   application:
     name: module-gateway
 
+  # ============================================
+  # Profile 설정
+  # ============================================
+  # local: 로컬 개발 환경 (application-local.yml 자동 로드)
+  # prod: 프로덕션 환경 (환경 변수 또는 application-prod.yml 사용)
+  profiles:
+    active: local  # 로컬 개발 환경
+
   main:
     web-application-type: reactive
 
+  # ============================================
+  # Spring Cloud Gateway 설정
+  # ============================================
   cloud:
     gateway:
       server:
         webflux:
           routes:
-            - id: user-service
+            # Auth 서비스 라우팅
+            - id: auth-service
               uri: http://localhost:8081
               predicates:
                 - Path=/api/auth/**
               filters:
                 - StripPrefix=0
 
+            # Feed 서비스 라우팅
             - id: feed-service
               uri: http://localhost:8082
               predicates:
@@ -27,6 +40,7 @@ spring:
               filters:
                 - StripPrefix=0
 
+            # Chat 서비스 라우팅
             - id: chat-service
               uri: http://localhost:8083
               predicates:
@@ -34,7 +48,12 @@ spring:
               filters:
                 - StripPrefix=0
 
+# ============================================
+# JWT 설정
+# ============================================
+# 로컬: application-local.yml에서 실제 값 사용
+# 프로덕션: GitHub Secrets 또는 환경 변수에서 주입
 jwt:
-  secret: ${JWT_SECRET:}
-  access-expiration: 1800   # 30분 = 30 * 60 * 1000 1800000
-  refresh-expiration: 604800000 # 7일 = 7 * 24 * 60 * 60 * 1000
+  secret: ${JWT_SECRET:}  # 환경 변수 또는 application-local.yml에서 주입
+  access-expiration: 1800   # 30분 (초 단위)
+  refresh-expiration: 604800000 # 7일 (밀리초 단위)
