@@ -17,7 +17,7 @@ COPY . .
 RUN gradle :module-gateway:bootJar --no-daemon
 
 # 실행 스테이지
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # 빌드된 JAR 복사
