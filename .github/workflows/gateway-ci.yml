@@ -181,12 +181,15 @@ jobs:
 
       - name: Push to Docker Hub
         if: success()
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
+          DOCKER_USER=$(echo "$DOCKER_USER" | tr -d '[:space:]')
           echo "Docker Hub에 이미지 푸시..."
-          docker tag pet-manager-gateway:latest ${{ secrets.DOCKERHUB_USERNAME }}/pet-manager-gateway:latest
-          docker tag pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }} ${{ secrets.DOCKERHUB_USERNAME }}/pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }}
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/pet-manager-gateway:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }}
+          docker tag pet-manager-gateway:latest ${DOCKER_USER}/pet-manager-gateway:latest
+          docker tag pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }} ${DOCKER_USER}/pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }}
+          docker push ${DOCKER_USER}/pet-manager-gateway:latest
+          docker push ${DOCKER_USER}/pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }}
           echo "Docker Hub 푸시 완료"
 
       # ============================================
