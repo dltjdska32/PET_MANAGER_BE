@@ -2,6 +2,13 @@
 # Auth Service CI/CD Pipeline
 # ============================================
 # module-auth, module-global 변경 시에만 실행됩니다.
+#
+# [필수 GitHub Secrets]
+# - DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+# - EC2_HOST_AUTH_FEED (Auth/Feed 서버 IP, 예: 16.184.2.246)
+# - EC2_USER (예: ubuntu)
+# - EC2_SSH_KEY (EC2 SSH 개인키 전체 내용)
+# - JWT_SECRET
 
 name: Auth Service CI/CD
 
@@ -9,7 +16,7 @@ on:
   push:
     branches:
       - main
-      - develop
+      - dev
     paths:
       - 'module-auth/**'
       - 'module-global/**'
@@ -121,10 +128,35 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/pet-manager-auth:${{ steps.set-version.outputs.VERSION_NAME }}
           echo "Docker Hub 푸시 완료"
 
-      - name: Deploy to Server
-        if: success()
-        run: |
-          echo "배포 시작..."
-          echo "배포 환경: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}"
-          echo "버전: ${{ steps.set-version.outputs.VERSION_NAME }}"
-          echo "배포 완료 (실제 배포 로직 구현 필요)"
+      - name: Deploy to EC2 (Auth)
+        if: success() && github.event_name == 'workflow_dispatch'
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        with:
+          host: ${{ secrets.EC2_HOST_AUTH_FEED }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,JWT_SECRET
+          script: |
+            echo "Docker Hub 로그인..."
+            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            
+            echo "Auth 이미지 Pull 및 컨테이너 재시작..."
+            docker pull $DOCKERHUB_USERNAME/pet-manager-auth:latest
+            
+            docker stop pet-manager-auth 2>/dev/null || true
+            docker rm pet-manager-auth 2>/dev/null || true
+            
+            docker run -d \
+              --name pet-manager-auth \
+              --restart always \
+              -p 8081:8081 \
+              --network pet-manager-network \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e JWT_SECRET="$JWT_SECRET" \
+              $DOCKERHUB_USERNAME/pet-manager-auth:latest
+            
+            echo "Auth 배포 완료"
