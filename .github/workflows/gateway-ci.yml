@@ -242,13 +242,19 @@ jobs:
               -e JWT_SECRET="$JWT_SECRET" \
               $DOCKERHUB_USERNAME/pet-manager-gateway:latest
 
-            echo "헬스체크 대기..."
-            for i in $(seq 1 30); do
-              if curl -sf http://127.0.0.1:${PORT}/actuator/health >/dev/null 2>&1; then
+            echo "헬스체크 대기 (최대 30초)..."
+            for i in $(seq 1 15); do
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://127.0.0.1:${PORT}/actuator/health 2>/dev/null || echo "000")
+              if [ "$CODE" = "200" ]; then
                 echo "헬스체크 성공"
                 break
               fi
-              if [ $i -eq 30 ]; then echo "헬스체크 실패"; exit 1; fi
+              if [ $i -eq 15 ]; then
+                echo "::error::헬스체크 실패 (30초 초과, 마지막 응답: $CODE)"
+                echo "가능한 원인: 1) 앱 기동 지연 2) /actuator/health가 503(Redis 등) 3) 앱 크래시. 컨테이너 로그:"
+                docker logs $CONTAINER_NAME --tail 80
+                exit 1
+              fi
               sleep 2
             done
 
