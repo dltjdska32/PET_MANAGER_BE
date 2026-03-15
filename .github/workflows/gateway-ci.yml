@@ -5,7 +5,7 @@
 #
 # [필수 GitHub Secrets]
 # - DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
-# - EC2_HOST_GATEWAY (Gateway 서버 IP, 예: 13.125.253.107)
+# - EC2_HOST_GATEWAY
 # - EC2_USER, EC2_SSH_KEY
 # - JWT_SECRET
 # MSA 구조에서 각 서비스는 독립적으로 배포되므로,
@@ -184,12 +184,17 @@ jobs:
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          DOCKER_USER=$(echo "$DOCKER_USER" | tr -d '[:space:]')
+          DOCKER_USER=$(echo -n "$DOCKER_USER" | tr -d '\r\n\t ' | tr '[:upper:]' '[:lower:]')
+          if [ -z "$DOCKER_USER" ]; then
+            echo "::error::DOCKERHUB_USERNAME 시크릿이 비어있습니다. GitHub Settings > Secrets에서 설정하세요."
+            exit 1
+          fi
+          IMAGE_BASE="${DOCKER_USER}/pet-manager-gateway"
           echo "Docker Hub에 이미지 푸시..."
-          docker tag pet-manager-gateway:latest ${DOCKER_USER}/pet-manager-gateway:latest
-          docker tag pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }} ${DOCKER_USER}/pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }}
-          docker push ${DOCKER_USER}/pet-manager-gateway:latest
-          docker push ${DOCKER_USER}/pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }}
+          docker tag pet-manager-gateway:latest ${IMAGE_BASE}:latest
+          docker tag pet-manager-gateway:${{ steps.set-version.outputs.VERSION_NAME }} ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
+          docker push ${IMAGE_BASE}:latest
+          docker push ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
           echo "Docker Hub 푸시 완료"
 
       # ============================================

@@ -19,6 +19,8 @@ spring:
   # ============================================
   # Spring Cloud Gateway 설정
   # ============================================
+  # 로컬: 기본값 localhost 사용
+  # 프로덕션: 환경 변수로 각 서비스 URI 주입 (EC2/배포 시 설정)
   cloud:
     gateway:
       server:
@@ -26,7 +28,7 @@ spring:
           routes:
             # Auth 서비스 라우팅
             - id: auth-service
-              uri: http://localhost:8081
+              uri: ${AUTH_SERVICE_URI:http://localhost:8081}
               predicates:
                 - Path=/api/auth/**
               filters:
@@ -34,7 +36,7 @@ spring:
 
             # Feed 서비스 라우팅
             - id: feed-service
-              uri: http://localhost:8082
+              uri: ${FEED_SERVICE_URI:http://localhost:8082}
               predicates:
                 - Path=/api/feed/**
               filters:
@@ -42,7 +44,7 @@ spring:
 
             # Chat 서비스 라우팅
             - id: chat-service
-              uri: http://localhost:8083
+              uri: ${CHAT_SERVICE_URI:http://localhost:8083}
               predicates:
                 - Path=/api/chat/**
               filters:

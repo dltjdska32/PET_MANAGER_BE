@@ -45,3 +45,6 @@ out/
 *.env
 .env
 !**/.env.example
+
+# 문서 (로컬 전용)
+docs/

@@ -119,12 +119,17 @@ jobs:
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          DOCKER_USER=$(echo "$DOCKER_USER" | tr -d '[:space:]')
+          DOCKER_USER=$(echo -n "$DOCKER_USER" | tr -d '\r\n\t ' | tr '[:upper:]' '[:lower:]')
+          if [ -z "$DOCKER_USER" ]; then
+            echo "::error::DOCKERHUB_USERNAME 시크릿이 비어있습니다. GitHub Settings > Secrets에서 설정하세요."
+            exit 1
+          fi
+          IMAGE_BASE="${DOCKER_USER}/pet-manager-feed"
           echo "Docker Hub에 이미지 푸시..."
-          docker tag pet-manager-feed:latest ${DOCKER_USER}/pet-manager-feed:latest
-          docker tag pet-manager-feed:${{ steps.set-version.outputs.VERSION_NAME }} ${DOCKER_USER}/pet-manager-feed:${{ steps.set-version.outputs.VERSION_NAME }}
-          docker push ${DOCKER_USER}/pet-manager-feed:latest
-          docker push ${DOCKER_USER}/pet-manager-feed:${{ steps.set-version.outputs.VERSION_NAME }}
+          docker tag pet-manager-feed:latest ${IMAGE_BASE}:latest
+          docker tag pet-manager-feed:${{ steps.set-version.outputs.VERSION_NAME }} ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
+          docker push ${IMAGE_BASE}:latest
+          docker push ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
           echo "Docker Hub 푸시 완료"
 
       - name: Deploy to EC2 (Feed)
