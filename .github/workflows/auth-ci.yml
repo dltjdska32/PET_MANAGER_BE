@@ -1,26 +1,15 @@
-# ============================================
-# Auth Service CI/CD Pipeline
-# ============================================
-# module-auth, module-global 변경 시에만 실행됩니다.
-#
-# [필수 GitHub Secrets]
-# - DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
-# - EC2_HOST_AUTH_FEED (Auth/Feed 서버 IP, 예: 16.184.2.246)
-# - EC2_USER (예: ubuntu)
-# - EC2_SSH_KEY (EC2 SSH 개인키 전체 내용)
-# - JWT_SECRET
-
 name: Auth Service CI/CD
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-    paths:
-      - 'module-auth/**'
-      - 'module-global/**'
-      - '.github/workflows/auth-ci.yml'
+# 트리거로 태그입력시에만 트리거설정
+#  push:
+#    branches:
+#      - main
+#      - dev
+#    paths:
+#      - 'module-auth/**'
+#      - 'module-global/**'
+#      - '.github/workflows/auth-ci.yml'
 
   workflow_dispatch:
     inputs:
@@ -136,7 +125,7 @@ jobs:
           docker push ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
           echo "Docker Hub 푸시 완료"
 
-      - name: Deploy to EC2 (Auth)
+      - name: Deploy to EC2 (Auth Blue-Green)
         if: success() && github.event_name == 'workflow_dispatch'
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -149,22 +138,51 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,JWT_SECRET
           script: |
+            set -e
             echo "Docker Hub 로그인..."
             echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            
-            echo "Auth 이미지 Pull 및 컨테이너 재시작..."
+            sudo mkdir -p /opt/pet-manager
+            CURRENT=$(cat /opt/pet-manager/auth_slot 2>/dev/null || echo "blue")
+            if [ "$CURRENT" = "blue" ]; then
+              TARGET="green"
+              PORT=9091
+              CONTAINER_NAME="pet-manager-auth-green"
+            else
+              TARGET="blue"
+              PORT=9081
+              CONTAINER_NAME="pet-manager-auth-blue"
+            fi
+            echo "현재 Auth 슬롯: $CURRENT → 배포 대상: $TARGET (포트 $PORT)"
+            docker stop $CONTAINER_NAME 2>/dev/null || true
+            docker rm $CONTAINER_NAME 2>/dev/null || true
             docker pull $DOCKERHUB_USERNAME/pet-manager-auth:latest
-            
-            docker stop pet-manager-auth 2>/dev/null || true
-            docker rm pet-manager-auth 2>/dev/null || true
-            
             docker run -d \
-              --name pet-manager-auth \
+              --name $CONTAINER_NAME \
               --restart always \
-              -p 8081:8081 \
+              -p ${PORT}:8081 \
               --network pet-manager-network \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e JWT_SECRET="$JWT_SECRET" \
               $DOCKERHUB_USERNAME/pet-manager-auth:latest
-            
-            echo "Auth 배포 완료"
+            echo "헬스체크 대기..."
+            for i in $(seq 1 30); do
+              if curl -sf http://127.0.0.1:${PORT}/actuator/health >/dev/null 2>&1; then
+                echo "헬스체크 성공"
+                break
+              fi
+              if [ $i -eq 30 ]; then echo "헬스체크 실패"; exit 1; fi
+              sleep 2
+            done
+            NGINX_CFG="/etc/nginx/sites-available/pet-manager-auth-feed"
+            if [ "$TARGET" = "green" ]; then
+              sudo sed -i 's/server 127.0.0.1:9081;/server 127.0.0.1:9091;/' $NGINX_CFG
+            else
+              sudo sed -i 's/server 127.0.0.1:9091;/server 127.0.0.1:9081;/' $NGINX_CFG
+            fi
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "$TARGET" | sudo tee /opt/pet-manager/auth_slot > /dev/null
+            OLD_CONTAINER="pet-manager-auth-blue"
+            [ "$TARGET" = "blue" ] && OLD_CONTAINER="pet-manager-auth-green"
+            docker stop $OLD_CONTAINER 2>/dev/null || true
+            docker rm $OLD_CONTAINER 2>/dev/null || true
+            echo "Auth 배포 완료 (활성 슬롯: $TARGET)"

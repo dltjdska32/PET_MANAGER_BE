@@ -11,14 +11,14 @@
 name: Chat Service CI/CD
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-    paths:
-      - 'module-chat/**'
-      - 'module-global/**'
-      - '.github/workflows/chat-ci.yml'
+#  push:
+#    branches:
+#      - main
+#      - dev
+#    paths:
+#      - 'module-chat/**'
+#      - 'module-global/**'
+#      - '.github/workflows/chat-ci.yml'
 
   workflow_dispatch:
     inputs:

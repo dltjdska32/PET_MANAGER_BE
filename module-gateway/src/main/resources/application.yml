@@ -57,5 +57,5 @@ spring:
 # 프로덕션: GitHub Secrets 또는 환경 변수에서 주입
 jwt:
   secret: ${JWT_SECRET:}  # 환경 변수 또는 application-local.yml에서 주입
-  access-expiration: 1800   # 30분 (초 단위)
+  access-expiration: 1800000   # 30분 (밀리초)
   refresh-expiration: 604800000 # 7일 (밀리초 단위)

@@ -11,14 +11,14 @@
 name: Feed Service CI/CD
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-    paths:
-      - 'module-feed/**'
-      - 'module-global/**'
-      - '.github/workflows/feed-ci.yml'
+#  push:
+#    branches:
+#      - main
+#      - dev
+#    paths:
+#      - 'module-feed/**'
+#      - 'module-global/**'
+#      - '.github/workflows/feed-ci.yml'
 
   workflow_dispatch:
     inputs:
@@ -132,7 +132,7 @@ jobs:
           docker push ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
           echo "Docker Hub 푸시 완료"
 
-      - name: Deploy to EC2 (Feed)
+      - name: Deploy to EC2 (Feed Blue-Green)
         if: success() && github.event_name == 'workflow_dispatch'
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -144,21 +144,57 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN
           script: |
+            set -e
             echo "Docker Hub 로그인..."
             echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            
-            echo "Feed 이미지 Pull 및 컨테이너 재시작..."
+
+            sudo mkdir -p /opt/pet-manager
+            CURRENT=$(cat /opt/pet-manager/feed_slot 2>/dev/null || echo "blue")
+            if [ "$CURRENT" = "blue" ]; then
+              TARGET="green"
+              PORT=9092
+              CONTAINER_NAME="pet-manager-feed-green"
+            else
+              TARGET="blue"
+              PORT=9082
+              CONTAINER_NAME="pet-manager-feed-blue"
+            fi
+            echo "현재 Feed 슬롯: $CURRENT → 배포 대상: $TARGET (포트 $PORT)"
+
+            docker stop $CONTAINER_NAME 2>/dev/null || true
+            docker rm $CONTAINER_NAME 2>/dev/null || true
             docker pull $DOCKERHUB_USERNAME/pet-manager-feed:latest
-            
-            docker stop pet-manager-feed 2>/dev/null || true
-            docker rm pet-manager-feed 2>/dev/null || true
-            
+
             docker run -d \
-              --name pet-manager-feed \
+              --name $CONTAINER_NAME \
               --restart always \
-              -p 8082:8082 \
+              -p ${PORT}:8082 \
               --network pet-manager-network \
               -e SPRING_PROFILES_ACTIVE=prod \
               $DOCKERHUB_USERNAME/pet-manager-feed:latest
-            
-            echo "Feed 배포 완료"
+
+            echo "헬스체크 대기..."
+            for i in $(seq 1 30); do
+              if curl -sf http://127.0.0.1:${PORT}/actuator/health >/dev/null 2>&1; then
+                echo "헬스체크 성공"
+                break
+              fi
+              if [ $i -eq 30 ]; then echo "헬스체크 실패"; exit 1; fi
+              sleep 2
+            done
+
+            NGINX_CFG="/etc/nginx/sites-available/pet-manager-auth-feed"
+            if [ "$TARGET" = "green" ]; then
+              sudo sed -i 's/server 127.0.0.1:9082;/server 127.0.0.1:9092;/' $NGINX_CFG
+            else
+              sudo sed -i 's/server 127.0.0.1:9092;/server 127.0.0.1:9082;/' $NGINX_CFG
+            fi
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "$TARGET" | sudo tee /opt/pet-manager/feed_slot > /dev/null
+
+            OLD_CONTAINER="pet-manager-feed-blue"
+            [ "$TARGET" = "blue" ] && OLD_CONTAINER="pet-manager-feed-green"
+            docker stop $OLD_CONTAINER 2>/dev/null || true
+            docker rm $OLD_CONTAINER 2>/dev/null || true
+
+            echo "Feed 배포 완료 (활성 슬롯: $TARGET)"

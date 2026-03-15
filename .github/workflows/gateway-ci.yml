@@ -17,16 +17,16 @@ name: Gateway Service CI/CD
 # Workflow 트리거 설정
 # ============================================
 on:
-  # Push 이벤트: 특정 브랜치에 push되거나 Gateway 모듈이 변경될 때 실행
-  push:
-    branches:
-      - main      # 메인 브랜치
-      - dev  # 개발 브랜치
-    paths:
-      # MSA 구조: Gateway 모듈만 변경되면 실행
-      # 다른 모듈(auth, feed, chat)이 변경되어도 이 workflow는 실행되지 않음
-      - 'module-gateway/**'
-      - '.github/workflows/gateway-ci.yml'  # workflow 파일 자체가 변경될 때도 실행
+#  # Push 이벤트: 특정 브랜치에 push되거나 Gateway 모듈이 변경될 때 실행
+#  push:
+#    branches:
+#      - main      # 메인 브랜치
+#      - dev  # 개발 브랜치
+#    paths:
+#      # MSA 구조: Gateway 모듈만 변경되면 실행
+#      # 다른 모듈(auth, feed, chat)이 변경되어도 이 workflow는 실행되지 않음
+#      - 'module-gateway/**'
+#      - '.github/workflows/gateway-ci.yml'  # workflow 파일 자체가 변경될 때도 실행
 
   # 수동 실행: GitHub Actions UI에서 수동으로 실행 가능
   workflow_dispatch:
@@ -200,7 +200,7 @@ jobs:
       # ============================================
       # Step 10: EC2 배포
       # ============================================
-      - name: Deploy to EC2 (Gateway)
+      - name: Deploy to EC2 (Gateway Blue-Green)
         if: success() && github.event_name == 'workflow_dispatch'
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -213,22 +213,58 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,JWT_SECRET
           script: |
+            set -e
             echo "Docker Hub 로그인..."
             echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            
-            echo "Gateway 이미지 Pull 및 컨테이너 재시작..."
+
+            sudo mkdir -p /opt/pet-manager
+            CURRENT=$(cat /opt/pet-manager/gateway_slot 2>/dev/null || echo "blue")
+            if [ "$CURRENT" = "blue" ]; then
+              TARGET="green"
+              PORT=8081
+              CONTAINER_NAME="pet-manager-gateway-green"
+            else
+              TARGET="blue"
+              PORT=8080
+              CONTAINER_NAME="pet-manager-gateway-blue"
+            fi
+            echo "현재 Gateway 슬롯: $CURRENT → 배포 대상: $TARGET (포트 $PORT)"
+
+            docker stop $CONTAINER_NAME 2>/dev/null || true
+            docker rm $CONTAINER_NAME 2>/dev/null || true
             docker pull $DOCKERHUB_USERNAME/pet-manager-gateway:latest
-            
-            docker stop pet-manager-gateway 2>/dev/null || true
-            docker rm pet-manager-gateway 2>/dev/null || true
-            
+
             docker run -d \
-              --name pet-manager-gateway \
+              --name $CONTAINER_NAME \
               --restart always \
-              -p 8080:8080 \
+              -p ${PORT}:8080 \
               --network pet-manager-network \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e JWT_SECRET="$JWT_SECRET" \
               $DOCKERHUB_USERNAME/pet-manager-gateway:latest
-            
-            echo "Gateway 배포 완료"
+
+            echo "헬스체크 대기..."
+            for i in $(seq 1 30); do
+              if curl -sf http://127.0.0.1:${PORT}/actuator/health >/dev/null 2>&1; then
+                echo "헬스체크 성공"
+                break
+              fi
+              if [ $i -eq 30 ]; then echo "헬스체크 실패"; exit 1; fi
+              sleep 2
+            done
+
+            NGINX_CFG="/etc/nginx/sites-available/pet-manager-gateway"
+            if [ "$TARGET" = "green" ]; then
+              sudo sed -i 's/server 127.0.0.1:8080;/server 127.0.0.1:8081;/' $NGINX_CFG
+            else
+              sudo sed -i 's/server 127.0.0.1:8081;/server 127.0.0.1:8080;/' $NGINX_CFG
+            fi
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "$TARGET" | sudo tee /opt/pet-manager/gateway_slot > /dev/null
+
+            OLD_CONTAINER="pet-manager-gateway-blue"
+            [ "$TARGET" = "blue" ] && OLD_CONTAINER="pet-manager-gateway-green"
+            docker stop $OLD_CONTAINER 2>/dev/null || true
+            docker rm $OLD_CONTAINER 2>/dev/null || true
+
+            echo "Gateway 배포 완료 (활성 슬롯: $TARGET)"
