@@ -238,7 +238,6 @@ jobs:
               --name $CONTAINER_NAME \
               --restart always \
               -p ${PORT}:8080 \
-              --network pet-manager-network \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e JWT_SECRET="$JWT_SECRET" \
               $DOCKERHUB_USERNAME/pet-manager-gateway:latest

@@ -37,14 +37,37 @@ out/
 .vscode/
 
 
-# 민감한 설정 파일 (로컬 개발용)
+# ========== 설정 파일 / 비밀 포함 파일 (커밋 금지) ==========
+
+# 로컬/개발 전용 설정 (DB 비밀번호 등)
 **/application-local.yml
 **/application-local.yaml
+**/*-local.yml
+**/*-local.yaml
 
-# 환경 변수 파일 (.env.example은 커밋됨 - 템플릿용)
-*.env
+# 프로덕션 비밀 포함 시 사용
+**/application-prod.yml
+**/application-prod.yaml
+**/application-production.yml
+**/application-production.yaml
+
+# 환경 변수 파일
 .env
-!**/.env.example
+.env.*
+!.env.example
+**/.env
+**/.env.local
+**/.env.prod
+**/.env.production
+
+# 키/인증서
+*.pem
+*.key
+*.p12
+*.jks
+**/secrets/
+**/*-secret*.yml
+**/*-secret*.yaml
 
 # 문서 (로컬 전용)
 docs/
