@@ -1,0 +1,200 @@
+# ============================================
+# Feed Service CI/CD Pipeline
+# ============================================
+# module-feed, module-global 변경 시에만 실행됩니다.
+#
+# [필수 GitHub Secrets]
+# - DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+# - EC2_HOST_AUTH_FEED (Auth/Feed 서버 IP)
+# - EC2_USER, EC2_SSH_KEY
+
+name: Feed Service CI/CD
+
+on:
+#  push:
+#    branches:
+#      - main
+#      - dev
+#    paths:
+#      - 'module-feed/**'
+#      - 'module-global/**'
+#      - '.github/workflows/feed-ci.yml'
+
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: '배포 버전 태그 (예: v1.0.0)'
+        required: true
+        default: latest
+        type: string
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.set-version.outputs.VERSION_NAME }}
+      jar-path: ${{ steps.build.outputs.JAR_PATH }}
+
+    steps:
+      - name: Set Version Name
+        id: set-version
+        run: |
+          VERSION_TAG="${{ github.event.inputs.tags || 'latest' }}"
+          VERSION_NAME=$(echo "$VERSION_TAG" | sed "s/\./\-/g")
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "버전명 설정: $VERSION_NAME"
+
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tags || github.ref }}
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build Feed Module
+        id: build
+        run: |
+          echo "Feed 모듈 빌드 시작..."
+          ./gradlew :module-feed:clean :module-feed:bootJar -x test
+          
+          JAR_PATH="module-feed/build/libs/module-feed-0.0.1-SNAPSHOT.jar"
+          if [ -f "$JAR_PATH" ]; then
+            echo "JAR_PATH=$JAR_PATH" >> $GITHUB_OUTPUT
+            echo "빌드 완료: $JAR_PATH"
+          else
+            echo "빌드 실패: JAR 파일을 찾을 수 없습니다"
+            exit 1
+          fi
+        env:
+          SPRING_PROFILES_ACTIVE: prod
+
+      - name: Rename JAR with Version
+        run: |
+          cd module-feed/build/libs
+          OLD_JAR="module-feed-0.0.1-SNAPSHOT.jar"
+          NEW_JAR="module-feed-${{ steps.set-version.outputs.VERSION_NAME }}.jar"
+          
+          if [ -f "$OLD_JAR" ]; then
+            mv "$OLD_JAR" "$NEW_JAR"
+            echo "파일명 변경: $OLD_JAR -> $NEW_JAR"
+          else
+            echo "JAR 파일을 찾을 수 없습니다: $OLD_JAR"
+            exit 1
+          fi
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: feed-service-${{ steps.set-version.outputs.VERSION_NAME }}
+          path: module-feed/build/libs/module-feed-${{ steps.set-version.outputs.VERSION_NAME }}.jar
+          retention-days: 7
+
+      - name: Build Docker Image
+        if: success()
+        run: |
+          echo "Docker 이미지 빌드 시작..."
+          docker build -f module-feed/Dockerfile -t pet-manager-feed:${{ steps.set-version.outputs.VERSION_NAME }} .
+          docker build -f module-feed/Dockerfile -t pet-manager-feed:latest .
+          echo "Docker 이미지 빌드 완료"
+        env:
+          SPRING_PROFILES_ACTIVE: prod
+
+      - name: Login to Docker Hub
+        if: success()
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push to Docker Hub
+        if: success()
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          DOCKER_USER=$(echo -n "$DOCKER_USER" | tr -d '\r\n\t ' | tr '[:upper:]' '[:lower:]')
+          if [ -z "$DOCKER_USER" ]; then
+            echo "::error::DOCKERHUB_USERNAME 시크릿이 비어있습니다. GitHub Settings > Secrets에서 설정하세요."
+            exit 1
+          fi
+          IMAGE_BASE="${DOCKER_USER}/pet-manager-feed"
+          echo "Docker Hub에 이미지 푸시..."
+          docker tag pet-manager-feed:latest ${IMAGE_BASE}:latest
+          docker tag pet-manager-feed:${{ steps.set-version.outputs.VERSION_NAME }} ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
+          docker push ${IMAGE_BASE}:latest
+          docker push ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
+          echo "Docker Hub 푸시 완료"
+
+      - name: Deploy to EC2 (Feed Blue-Green)
+        if: success() && github.event_name == 'workflow_dispatch'
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        with:
+          host: ${{ secrets.EC2_HOST_AUTH_FEED }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN
+          script: |
+            set -e
+            echo "Docker Hub 로그인..."
+            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+            sudo mkdir -p /opt/pet-manager
+            CURRENT=$(cat /opt/pet-manager/feed_slot 2>/dev/null || echo "blue")
+            if [ "$CURRENT" = "blue" ]; then
+              TARGET="green"
+              PORT=9092
+              CONTAINER_NAME="pet-manager-feed-green"
+            else
+              TARGET="blue"
+              PORT=9082
+              CONTAINER_NAME="pet-manager-feed-blue"
+            fi
+            echo "현재 Feed 슬롯: $CURRENT → 배포 대상: $TARGET (포트 $PORT)"
+
+            docker stop $CONTAINER_NAME 2>/dev/null || true
+            docker rm $CONTAINER_NAME 2>/dev/null || true
+            docker pull $DOCKERHUB_USERNAME/pet-manager-feed:latest
+
+            docker run -d \
+              --name $CONTAINER_NAME \
+              --restart always \
+              -p ${PORT}:8082 \
+              --network pet-manager-network \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              $DOCKERHUB_USERNAME/pet-manager-feed:latest
+
+            echo "헬스체크 대기..."
+            for i in $(seq 1 30); do
+              if curl -sf http://127.0.0.1:${PORT}/actuator/health >/dev/null 2>&1; then
+                echo "헬스체크 성공"
+                break
+              fi
+              if [ $i -eq 30 ]; then echo "헬스체크 실패"; exit 1; fi
+              sleep 2
+            done
+
+            NGINX_CFG="/etc/nginx/sites-available/pet-manager-auth-feed"
+            if [ "$TARGET" = "green" ]; then
+              sudo sed -i 's/server 127.0.0.1:9082;/server 127.0.0.1:9092;/' $NGINX_CFG
+            else
+              sudo sed -i 's/server 127.0.0.1:9092;/server 127.0.0.1:9082;/' $NGINX_CFG
+            fi
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "$TARGET" | sudo tee /opt/pet-manager/feed_slot > /dev/null
+
+            OLD_CONTAINER="pet-manager-feed-blue"
+            [ "$TARGET" = "blue" ] && OLD_CONTAINER="pet-manager-feed-green"
+            docker stop $OLD_CONTAINER 2>/dev/null || true
+            docker rm $OLD_CONTAINER 2>/dev/null || true
+
+            echo "Feed 배포 완료 (활성 슬롯: $TARGET)"

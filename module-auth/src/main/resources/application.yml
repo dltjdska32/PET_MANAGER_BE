@@ -1,0 +1,95 @@
+
+spring:
+  mail:
+    host: smtp.gmail.com   # 네이버 호스트
+    port: 587
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true              # 사용자 인증 여부
+          timeout: 5000           # 이메일 전송 타임아웃 시간
+          starttls:
+            enable: true          # TLS를 통해 안전한 통신 사용 여부
+      ttl: 180
+
+
+
+  application:
+    name: module-auth
+
+  profiles:
+    active: local  # 로컬 개발 환경
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/pet_manager_auth?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    defer-datasource-initialization: false
+    show-sql: true
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+
+jwt:
+  secret: ${JWT_SECRET:}
+  access-expiration: 1800000  # 30분 (밀리초)
+  refresh-expiration: 604800000 # 7일 = 7 * 24 * 60 * 60 * 1000
+
+  key:
+    invalid-token-code: INVALID_TOKEN
+    expired-token-code: EXPIRED_TOKEN
+
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api/auth
+
+
+
+# kakao-oauth (redirect url은 프로덕션에서 환경 변수로 Gateway 주소 설정)
+kakao:
+  client:
+    id: ${KAKAO_CLIENT_ID:}
+    secret: ${KAKAO_CLIENT_SECRET:}
+  redirect:
+    url: ${AUTH_CALLBACK_BASE_URL:http://localhost:8080}/api/auth/login/KAKAO/callback
+  auth:
+    url: https://kauth.kakao.com/oauth/authorize
+  token:
+    url: https://kauth.kakao.com/oauth/token
+  api:
+    url: https://kapi.kakao.com/v2/user/me
+
+#google-oauth
+google:
+  client:
+    id: ${GOOGLE_CLIENT_ID:}
+    secret: ${GOOGLE_CLIENT_SECRET:}
+
+
+restTemplate:
+  connectTimeout: 7000    # 연결 제한시간
+  readTimeout: 30000      # 읽기 제한시간
