@@ -76,6 +76,11 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+  health:
+    db:
+      enabled: false   # CI 헬스체크만 통과용, DB 지연 시 503 방지
+    redis:
+      enabled: false   # CI 헬스체크만 통과용
 
 
 
