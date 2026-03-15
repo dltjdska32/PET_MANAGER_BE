@@ -1,15 +1,14 @@
 name: Auth Service CI/CD
 
 on:
-# 트리거로 태그입력시에만 트리거설정
-#  push:
-#    branches:
-#      - main
-#      - dev
-#    paths:
-#      - 'module-auth/**'
-#      - 'module-global/**'
-#      - '.github/workflows/auth-ci.yml'
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'module-auth/**'
+      - 'module-global/**'
+      - '.github/workflows/auth-ci.yml'
 
   workflow_dispatch:
     inputs:
