@@ -67,6 +67,16 @@ server:
   servlet:
     context-path: /api/auth
 
+# Actuator (헬스체크 등) - CI 블루그린 배포용
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when_authorized
+
 
 
 # kakao-oauth (redirect url은 프로덕션에서 환경 변수로 Gateway 주소 설정)
