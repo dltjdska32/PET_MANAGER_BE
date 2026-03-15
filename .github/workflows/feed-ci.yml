@@ -160,7 +160,7 @@ jobs:
               CONTAINER_NAME="pet-manager-feed-blue"
             fi
             echo "현재 Feed 슬롯: $CURRENT → 배포 대상: $TARGET (포트 $PORT)"
-
+            docker network create pet-manager-network 2>/dev/null || true
             docker stop $CONTAINER_NAME 2>/dev/null || true
             docker rm $CONTAINER_NAME 2>/dev/null || true
             docker pull $DOCKERHUB_USERNAME/pet-manager-feed:latest
