@@ -75,12 +75,12 @@ management:
         include: health
   endpoint:
     health:
-      show-details: when_authorized
+      show-details: always   # when_authorized → always (어떤 컴포넌트가 DOWN인지 확인용)
   health:
     db:
-      enabled: false   # CI 헬스체크만 통과용, DB 지연 시 503 방지
+      enabled: true    # DB 연결 상태 확인 (어떤 컴포넌트 DOWN인지 로그 확인용)
     redis:
-      enabled: false   # CI 헬스체크만 통과용
+      enabled: true    # Redis 연결 상태 확인 (어떤 컴포넌트 DOWN인지 로그 확인용)
 
 
 
