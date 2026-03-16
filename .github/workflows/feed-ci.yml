@@ -11,14 +11,15 @@
 name: Feed Service CI/CD
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-    paths:
-      - 'module-feed/**'
-      - 'module-global/**'
-      - '.github/workflows/feed-ci.yml'
+  # 머지 시 자동 실행 원하면 아래 주석 해제
+  # push:
+  #   branches:
+  #     - main
+  #     - dev
+  #   paths:
+  #     - 'module-feed/**'
+  #     - 'module-global/**'
+  #     - '.github/workflows/feed-ci.yml'
 
   workflow_dispatch:
     inputs:

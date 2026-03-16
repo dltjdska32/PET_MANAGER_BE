@@ -17,18 +17,15 @@ name: Gateway Service CI/CD
 # Workflow 트리거 설정
 # ============================================
 on:
-  # Push 이벤트: 특정 브랜치에 push되거나 Gateway 모듈이 변경될 때 실행
-  push:
-    branches:
-      - main      # 메인 브랜치
-      - dev  # 개발 브랜치
-    paths:
-      # MSA 구조: Gateway 모듈만 변경되면 실행
-      # 다른 모듈(auth, feed, chat)이 변경되어도 이 workflow는 실행되지 않음
-      - 'module-gateway/**'
-      - '.github/workflows/gateway-ci.yml'  # workflow 파일 자체가 변경될 때도 실행
+  # 머지 시 자동 실행 원하면 아래 주석 해제
+  # push:
+  #   branches:
+  #     - main
+  #     - dev
+  #   paths:
+  #     - 'module-gateway/**'
+  #     - '.github/workflows/gateway-ci.yml'
 
-  # 수동 실행: GitHub Actions UI에서 수동으로 실행 가능
   workflow_dispatch:
     inputs:
       tags:
