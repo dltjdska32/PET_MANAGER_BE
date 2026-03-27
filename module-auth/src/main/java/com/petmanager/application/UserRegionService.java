@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -26,25 +27,30 @@ public class UserRegionService {
 
     /// 유저가 설정한 지역 업서트 메서드
     @Transactional(readOnly = false)
-    public void upsertUserRegions(SaveUserRegionReqDto dto, User user) {
+    public List<Long> upsertUserRegions(SaveUserRegionReqDto dto, User user) {
 
         Integer userRegionCount = userRegionRepo.countByUserId(user.getId());
 
+        List<Long> retVal;
+
         if (dto.isSaveLogic() && userRegionCount == 0) {
 
-            saveUserRegion(dto.addRegionIds(), user);
-        } else {                /// 위에 걸리지 않는다면 모두 업데이트
+            retVal = saveUserRegion(dto.addRegionIds(), user);
+        } else {   /// 위에 걸리지 않는다면 모두 업데이트
 
-            updateUserRegion(dto, user, userRegionCount);
+            retVal = updateUserRegion(dto, user, userRegionCount);
         }
 
+        return retVal;
     }
 
     ///  유저가 설정한 지역 저장 메서드
     @Transactional(readOnly = false)
-    public void saveUserRegion(List<Long> addRegionIds, User user) {
+    public List<Long> saveUserRegion(List<Long> addRegionIds, User user) {
 
-        if(addRegionIds == null || addRegionIds.isEmpty()) return;
+        if(addRegionIds == null || addRegionIds.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         List<UserRegion> userRegions = new ArrayList<>();
 
@@ -60,12 +66,16 @@ public class UserRegionService {
             userRegions.add(userRegion);
         }
 
-        userRegionRepo.saveAll(userRegions);
+        List<UserRegion> savedUserRegions = userRegionRepo.saveAll(userRegions);
+
+
+        return savedUserRegions.stream()
+                .map(UserRegion::getId).toList();
     }
 
 
     /// 유저가 설정한 지역 업데이트 메서드
-    public void updateUserRegion(SaveUserRegionReqDto dto, User user, int userRegionCount) {
+    public List<Long> updateUserRegion(SaveUserRegionReqDto dto, User user, int userRegionCount) {
 
         int updatedUserRegionCount = userRegionCount + dto.addRegionIds().size() - dto.deleteRegionIds().size();
 
@@ -74,8 +84,7 @@ public class UserRegionService {
         /// 지역 삭제
         deleteUserRegions(dto.deleteRegionIds(), user);
         /// 지역 저장
-        saveUserRegion(dto.addRegionIds(), user);
-
+        return saveUserRegion(dto.addRegionIds(), user);
     }
 
     /// 유저 지역 삭제

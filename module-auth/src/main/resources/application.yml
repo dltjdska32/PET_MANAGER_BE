@@ -1,5 +1,11 @@
 
 spring:
+  task:
+    scheduling:
+      pool:
+        size: 2
+
+
   mail:
     host: smtp.gmail.com   # 네이버 호스트
     port: 587
