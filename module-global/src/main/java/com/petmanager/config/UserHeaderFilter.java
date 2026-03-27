@@ -45,8 +45,8 @@ public class UserHeaderFilter extends OncePerRequestFilter {
                     email,
                     Role.valueOf(role));
 
-            /// Spring Security는 단순 문자열(String)로는 권한을 못 알아먹음
-            ///  SimpleGrantedAuthority라는 전용 객체(계급장)로 포장
+            /// Spring Security는 단순 문자열로는 권한을 못 알아먹음
+            ///  SimpleGrantedAuthority라는 전용 객체로 포장
             List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
             Authentication auth = new UsernamePasswordAuthenticationToken(userInfo, null, authorities);

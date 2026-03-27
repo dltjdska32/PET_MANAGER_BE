@@ -3,13 +3,16 @@ package com.petmanager.application;
 
 import com.petmanager.application.dto.CreateOriginUserDto;
 import com.petmanager.application.dto.OriginLoginReqDto;
+import com.petmanager.application.dto.UpsertUserNicknameReqDto;
 import com.petmanager.application.exception.AuthException;
 import com.petmanager.domain.User;
 import com.petmanager.domain.repo.UserRepo;
 import com.petmanager.infra.oauth.OAuth2UserInfo;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-
+import com.petmanager.application.port.OutboxPort;
+import com.petmanager.application.event.UserCreatedEvent;
+import java.util.Collections;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ public class UserService {
 
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final OutboxPort outboxPort;
 
 
     public User login(OriginLoginReqDto reqDto) {
@@ -42,8 +46,14 @@ public class UserService {
 
         Optional<User> foundUser = userRepo.findByUsername(user.getUsername());
 
-        /// 저장된 유저가 없을경우 저장하고 유저 반환
-        return foundUser.orElseGet(() -> userRepo.save(user));
+        return foundUser.orElseGet(() -> {
+            User savedUser = userRepo.save(user);
+            
+            /// 신규 저장일 경우에만 지역없는 최초 가입 아웃박스 이벤트 발행
+            outboxPort.saveEvent(UserCreatedEvent.of(savedUser, Collections.emptyList()));
+            
+            return savedUser;
+        });
     }
 
 
@@ -70,5 +80,11 @@ public class UserService {
         if(isExist) {
             throw AuthException.badRequest("이미 존재하는 아이디 입니다.");
         }
+    }
+
+
+    public void updateNickname(String nickname, Long userId) {
+
+        int updatedCount = userRepo.updateNickname(nickname, userId);
     }
 }

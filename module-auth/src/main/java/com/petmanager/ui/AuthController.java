@@ -64,6 +64,7 @@ public class AuthController {
     }
 
 
+
     /// 기본로그인시 이메일인증 요청
     @Operation(
             summary = "유저 이메일 인증 요청",
@@ -118,7 +119,7 @@ public class AuthController {
         return Response.ok();
     }
 
-    /// 유저 지역 설정
+    /// 유저 지역 수정
     @Operation(
             summary = "유저 지역 설정 (삽입, 수정)",
             description = "유저 지역 설정 (삽입, 수정)"
@@ -132,6 +133,23 @@ public class AuthController {
 
         return Response.ok();
     }
+
+
+    /// 유저 닉네임 변경
+    @Operation(
+            summary = "유저 닉네임 수정 (upsert)",
+            description = "유저 닉네임 수정 (upsert)"
+    )
+    @PatchMapping("/user/nickname")
+    @PreAuthorize("hasRole('USER')")
+    public Response<Void> updateNickname (@RequestBody @Valid UpsertUserNicknameReqDto dto,
+                                             @AuthenticationPrincipal BasicUserInfo user) {
+
+        authService.updateNickname(dto, user);
+
+        return Response.ok();
+    }
+
 
 
     @Operation(

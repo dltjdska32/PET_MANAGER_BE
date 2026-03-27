@@ -1,8 +1,6 @@
 package com.petmanager.infra.security;
 
 import com.petmanager.config.UserHeaderFilter;
-import com.petmanager.config.JwtAccessDeniedHandler;
-import com.petmanager.config.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
