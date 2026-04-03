@@ -24,6 +24,7 @@ dependencies {
     // 분산락 (레디슨)
     implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.redisson:redisson-spring-boot-starter:3.30.0'
+    implementation 'software.amazon.awssdk:s3:2.25.10'
 
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     ///p6spy

@@ -1,25 +1,14 @@
-# ============================================
-# Feed Service CI/CD Pipeline
-# ============================================
-# module-feed, module-global 변경 시에만 실행됩니다.
-#
-# [필수 GitHub Secrets]
-# - DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
-# - EC2_HOST_AUTH_FEED (Auth/Feed 서버 IP)
-# - EC2_USER, EC2_SSH_KEY
-
 name: Feed Service CI/CD
 
 on:
-  # 머지 시 자동 실행 원하면 아래 주석 해제
-  # push:
-  #   branches:
-  #     - main
-  #     - dev
-  #   paths:
-  #     - 'module-feed/**'
-  #     - 'module-global/**'
-  #     - '.github/workflows/feed-ci.yml'
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'module-feed/**'
+      - 'module-global/**'
+      - '.github/workflows/feed-ci.yml'
 
   workflow_dispatch:
     inputs:
@@ -105,8 +94,6 @@ jobs:
           docker build -f module-feed/Dockerfile -t pet-manager-feed:${{ steps.set-version.outputs.VERSION_NAME }} .
           docker build -f module-feed/Dockerfile -t pet-manager-feed:latest .
           echo "Docker 이미지 빌드 완료"
-        env:
-          SPRING_PROFILES_ACTIVE: prod
 
       - name: Login to Docker Hub
         if: success()
@@ -139,16 +126,25 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SPRING_DATA_MONGODB_URI: ${{ secrets.SPRING_DATA_MONGODB_URI }}
+          AWS_S3_ACCESS_KEY: ${{ secrets.AWS_S3_ACCESS_KEY }}
+          AWS_S3_SECRET_KEY: ${{ secrets.AWS_S3_SECRET_KEY }}
+          AWS_S3_REGION: ${{ secrets.AWS_S3_REGION }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          SPRING_DATA_REDIS_HOST: ${{ secrets.SPRING_DATA_REDIS_HOST }}
+          SPRING_DATA_REDIS_PORT: ${{ secrets.SPRING_DATA_REDIS_PORT }}
+          SPRING_DATA_REDIS_PASSWORD: ${{ secrets.SPRING_DATA_REDIS_PASSWORD }}
         with:
           host: ${{ secrets.EC2_HOST_AUTH_FEED }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,JWT_SECRET,SPRING_DATA_MONGODB_URI,AWS_S3_ACCESS_KEY,AWS_S3_SECRET_KEY,AWS_S3_REGION,AWS_S3_BUCKET,SPRING_DATA_REDIS_HOST,SPRING_DATA_REDIS_PORT,SPRING_DATA_REDIS_PASSWORD
           script: |
             set -e
             echo "Docker Hub 로그인..."
             echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-
+            
             sudo mkdir -p /opt/pet-manager
             CURRENT=$(cat /opt/pet-manager/feed_slot 2>/dev/null || echo "blue")
             if [ "$CURRENT" = "blue" ]; then
@@ -161,46 +157,58 @@ jobs:
               CONTAINER_NAME="pet-manager-feed-blue"
             fi
             echo "현재 Feed 슬롯: $CURRENT → 배포 대상: $TARGET (포트 $PORT)"
+            
             docker network create pet-manager-network 2>/dev/null || true
             docker stop $CONTAINER_NAME 2>/dev/null || true
             docker rm $CONTAINER_NAME 2>/dev/null || true
             docker pull $DOCKERHUB_USERNAME/pet-manager-feed:latest
-
+            
             docker run -d \
               --name $CONTAINER_NAME \
               --restart always \
               -p ${PORT}:8082 \
               --network pet-manager-network \
               -e SPRING_PROFILES_ACTIVE=prod \
+              -e JWT_SECRET="$JWT_SECRET" \
+              -e SPRING_DATA_MONGODB_URI="$SPRING_DATA_MONGODB_URI" \
+              -e AWS_ACCESS_KEY="$AWS_S3_ACCESS_KEY" \
+              -e AWS_SECRET_KEY="$AWS_S3_SECRET_KEY" \
+              -e AWS_REGION="$AWS_S3_REGION" \
+              -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
+              -e SPRING_DATA_REDIS_HOST="$SPRING_DATA_REDIS_HOST" \
+              -e SPRING_DATA_REDIS_PORT="$SPRING_DATA_REDIS_PORT" \
+              -e SPRING_DATA_REDIS_PASSWORD="$SPRING_DATA_REDIS_PASSWORD" \
               $DOCKERHUB_USERNAME/pet-manager-feed:latest
-
-            echo "헬스체크 대기 (최대 30초)..."
-            for i in $(seq 1 15); do
+            
+            echo "헬스체크 대기 (최대 60초)..."
+            for i in $(seq 1 30); do
               CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://127.0.0.1:${PORT}/api/feed/actuator/health 2>/dev/null || echo "000")
               if [ "$CODE" = "200" ]; then
                 echo "헬스체크 성공"
                 break
               fi
-              if [ $i -eq 15 ]; then
-                echo "::error::헬스체크 실패 (30초 초과, 마지막 응답: $CODE)"
+              if [ $i -eq 30 ]; then
+                echo "::error::헬스체크 실패 (60초 초과, 마지막 응답: $CODE)"
+                echo "헬스 응답 본문:"
+                curl -s --connect-timeout 2 http://127.0.0.1:${PORT}/api/feed/actuator/health || true
                 docker logs $CONTAINER_NAME --tail 80
                 exit 1
               fi
               sleep 2
             done
-
+            
             NGINX_CFG="/etc/nginx/sites-available/pet-manager-auth-feed"
             if [ "$TARGET" = "green" ]; then
               sudo sed -i 's/server 127.0.0.1:9082;/server 127.0.0.1:9092;/' $NGINX_CFG
             else
               sudo sed -i 's/server 127.0.0.1:9092;/server 127.0.0.1:9082;/' $NGINX_CFG
             fi
+            
             sudo nginx -t && sudo systemctl reload nginx
             echo "$TARGET" | sudo tee /opt/pet-manager/feed_slot > /dev/null
-
+            
             OLD_CONTAINER="pet-manager-feed-blue"
             [ "$TARGET" = "blue" ] && OLD_CONTAINER="pet-manager-feed-green"
             docker stop $OLD_CONTAINER 2>/dev/null || true
             docker rm $OLD_CONTAINER 2>/dev/null || true
-
             echo "Feed 배포 완료 (활성 슬롯: $TARGET)"

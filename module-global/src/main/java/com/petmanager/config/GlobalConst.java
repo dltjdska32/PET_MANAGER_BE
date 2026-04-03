@@ -26,4 +26,10 @@ public abstract class GlobalConst {
 
     public static final String X_USER_EMAIL_COOKIE_KEY = "x-user-email";
 
+    public static final String AUTH_STREAM_KEY = "auth-events";
+
+    public static final String FEED_CONSUMER_GROUP = "feed-service-group";
+
+    public static final String FEED_IMG_DIR = "feed-img";
+
 }
