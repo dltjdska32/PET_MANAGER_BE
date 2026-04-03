@@ -1,8 +1,10 @@
 name: Auth Service CI/CD
 
 on:
-  # 머지 시 자동 실행 원하면 아래 주석 해제
-  # push:
+  # pr 머지시 
+  # pull_request:
+  #   types:
+  #     - closed
   #   branches:
   #     - main
   #     - dev
@@ -10,6 +12,7 @@ on:
   #     - 'module-auth/**'
   #     - 'module-global/**'
   #     - '.github/workflows/auth-ci.yml'
+
 
   workflow_dispatch:
     inputs:
@@ -20,6 +23,19 @@ on:
         type: string
 
 jobs:
+jobs:
+  #  merge시 실행 스크립트 
+  # build_and_deploy:
+  #   # PR이 닫혔을 때, 그 이유가 'Merge'인 경우에만 실행되도록 통제
+  #   if: github.event.pull_request.merged == true
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+      
+  #     - name: Run my build
+  #       run: echo "PR이 성공적으로 머지되었습니다. 작업을 시작합니다."
+  
   build-and-deploy:
     runs-on: ubuntu-latest
 
