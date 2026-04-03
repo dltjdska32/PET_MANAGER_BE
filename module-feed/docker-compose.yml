@@ -12,10 +12,8 @@ services:
     env_file:  # 이곳에서 .env 파일을 읽어 옵니다.
       - .env
     environment:
-      # 변수로 대체
-      SPRING_DATASOURCE_URL: ${FEED_DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${FEED_DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${FEED_DB_PASS}
+
+      SPRING_DATA_MONGODB_URI: ${MONGODB_URI}
       SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASS}
