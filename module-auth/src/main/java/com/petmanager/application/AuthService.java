@@ -40,7 +40,7 @@ public class AuthService {
     private final JavaMailSender javaMailSender;
     private final OutboxPort outboxPort;
     private final EventPublisher eventPublisher;
-    private final AuthOutboxRepo authOutboxRepo;
+
 
     /// 일반 회원로그인
     public TokenRespDto login(OriginLoginReqDto reqDto) {
