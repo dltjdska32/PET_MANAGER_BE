@@ -16,18 +16,18 @@ management:
 spring:
   application:
     name: module-feed
-  cloud:
-    aws:
-      credentials:
-        access-key: ${AWS_ACCESS_KEY}
-        secret-key: ${AWS_SECRET_KEY}
-      region:
-        static: ${AWS_REGION}
-        auto: false
-      s3:
-        bucket: ${AWS_S3_BUCKET}
-      stack:
-        auto: false
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION}
+      auto: false
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+    stack:
+      auto: false
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI}
