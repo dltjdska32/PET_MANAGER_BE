@@ -5,7 +5,7 @@ import org.springframework.boot.runApplication
 
 
 
-@SpringBootApplication
+@SpringBootApplication(exclude = [DataSourceAutoConfiguration::class])
 @EntityScan(basePackages = [
     "com.petmanager.domain",
     "com.petmanager.global.domain.Region"
