@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "auth_outbox")
 @Getter
 @Builder
 @NoArgsConstructor
