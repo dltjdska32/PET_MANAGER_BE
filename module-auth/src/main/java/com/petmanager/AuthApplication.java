@@ -6,14 +6,9 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-
 @EnableScheduling
 @EnableJpaAuditing
 @SpringBootApplication
-@EntityScan(basePackages = {
-        "com.petmanager.domain",      // module-auth의 엔티티
-        "com.petmanager.entity"       // module-global의 공통 엔티티 (Region 포함)
-})
 public class AuthApplication {
 
     public static void main(String[] args) {
