@@ -209,6 +209,9 @@ jobs:
                 echo "헬스 응답 본문:"
                 curl -s --connect-timeout 2 http://127.0.0.1:${PORT}/api/auth/actuator/health || true
                 docker logs $CONTAINER_NAME --tail 80
+                echo "롤백: 새 컨테이너($CONTAINER_NAME) 제거, 기존 슬롯 유지"
+                docker stop $CONTAINER_NAME 2>/dev/null || true
+                docker rm $CONTAINER_NAME 2>/dev/null || true
                 exit 1
               fi
               sleep 2
