@@ -1,14 +1,14 @@
 name: Feed Service CI/CD
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-    paths:
-      - 'module-feed/**'
-      - 'module-global/**'
-      - '.github/workflows/feed-ci.yml'
+  # push:
+  #   branches:
+  #     - main
+  #     - dev
+  #   paths:
+  #     - 'module-feed/**'
+  #     - 'module-global/**'
+  #     - '.github/workflows/feed-ci.yml'
 
   workflow_dispatch:
     inputs:
