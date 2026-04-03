@@ -1,6 +1,7 @@
 server:
   port: 8082
-  context-path: /api/feed
+  servlet:
+    context-path: /api/feed
 
 # Actuator (헬스체크) - CI 블루그린 배포용
 management:
@@ -15,3 +16,6 @@ management:
 spring:
   application:
     name: module-feed
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI}
