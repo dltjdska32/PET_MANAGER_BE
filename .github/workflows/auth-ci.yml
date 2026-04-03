@@ -22,7 +22,7 @@ on:
         default: latest
         type: string
 
-jobs:
+
 jobs:
   #  merge시 실행 스크립트 
   # build_and_deploy:
@@ -35,7 +35,7 @@ jobs:
       
   #     - name: Run my build
   #       run: echo "PR이 성공적으로 머지되었습니다. 작업을 시작합니다."
-  
+
   build-and-deploy:
     runs-on: ubuntu-latest
 
