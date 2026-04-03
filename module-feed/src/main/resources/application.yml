@@ -38,3 +38,7 @@ jwt:
   secret: ${JWT_SECRET:}
   access-expiration: 1800000
   refresh-expiration: 604800000
+
+restTemplate:
+  connectTimeout: 7000
+  readTimeout: 30000
