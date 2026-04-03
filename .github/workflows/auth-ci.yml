@@ -164,6 +164,7 @@ jobs:
           host: ${{ secrets.EC2_HOST_AUTH_FEED }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          command_timeout: 5m
           envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,JWT_SECRET,SPRING_DATASOURCE_URL,SPRING_DATASOURCE_USERNAME,SPRING_DATASOURCE_PASSWORD,SPRING_DATA_REDIS_HOST,SPRING_DATA_REDIS_PORT,SPRING_DATA_REDIS_PASSWORD,SPRING_MAIL_USERNAME,SPRING_MAIL_PASSWORD,AWS_S3_ACCESS_KEY,AWS_S3_SECRET_KEY,AWS_S3_REGION,AWS_S3_BUCKET
           script: |
             set -e
@@ -205,15 +206,15 @@ jobs:
               -e AWS_REGION="$AWS_S3_REGION" \
               -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
               $DOCKERHUB_USERNAME/pet-manager-auth:latest
-            echo "헬스체크 대기 (최대 60초)..."
-            for i in $(seq 1 30); do
+            echo "헬스체크 대기 (최대 120초)..."
+            for i in $(seq 1 60); do
               CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://127.0.0.1:${PORT}/api/auth/actuator/health 2>/dev/null || echo "000")
               if [ "$CODE" = "200" ]; then
                 echo "헬스체크 성공"
                 break
               fi
-              if [ $i -eq 30 ]; then
-                echo "::error::헬스체크 실패 (60초 초과, 마지막 응답: $CODE)"
+              if [ $i -eq 60 ]; then
+                echo "::error::헬스체크 실패 (120초 초과, 마지막 응답: $CODE)"
                 echo "헬스 응답 본문:"
                 curl -s --connect-timeout 2 http://127.0.0.1:${PORT}/api/auth/actuator/health || true
                 docker logs $CONTAINER_NAME --tail 80
