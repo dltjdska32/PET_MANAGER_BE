@@ -3,6 +3,10 @@ server:
   servlet:
     context-path: /api/feed
 
+logging:
+  level:
+    root: DEBUG
+
 # Actuator (헬스체크) - CI 블루그린 배포용
 management:
   endpoints:
