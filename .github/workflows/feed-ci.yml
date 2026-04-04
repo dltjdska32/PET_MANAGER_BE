@@ -193,7 +193,8 @@ jobs:
                 echo "::error::헬스체크 실패 (120초 초과, 마지막 응답: $CODE)"
                 echo "헬스 응답 본문:"
                 curl -s --connect-timeout 2 http://127.0.0.1:${PORT}/api/feed/actuator/health || true
-                docker logs $CONTAINER_NAME --tail 80
+                echo "에러/경고 로그 요약:"
+                docker logs $CONTAINER_NAME 2>&1 | grep -iE "error|warn|exception|fail" | tail -n 50 || echo "관련 에러 로그 없음"
                 echo "롤백: 새 컨테이너($CONTAINER_NAME) 제거, 기존 슬롯 유지"
                 docker stop $CONTAINER_NAME 2>/dev/null || true
                 docker rm $CONTAINER_NAME 2>/dev/null || true
