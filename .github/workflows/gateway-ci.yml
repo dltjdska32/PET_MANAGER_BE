@@ -238,8 +238,8 @@ jobs:
               -p ${PORT}:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e JWT_SECRET="$JWT_SECRET" \
-              -e AUTH_SERVICE_URI="http://$INTERNAL_AUTH_FEED_IP" \
-              -e FEED_SERVICE_URI="http://$INTERNAL_AUTH_FEED_IP" \
+              -e AUTH_SERVICE_URI="http://$INTERNAL_AUTH_FEED_IP:8081" \
+              -e FEED_SERVICE_URI="http://$INTERNAL_AUTH_FEED_IP:8082" \
               $DOCKERHUB_USERNAME/pet-manager-gateway:latest
 
             echo "헬스체크 대기 (최대 30초)..."
