@@ -41,7 +41,7 @@ spring:
           routes:
             # Auth 서비스 라우팅
             - id: auth-service
-              uri: ${AUTH_SERVICE_URI:http://localhost:8081}
+              uri: ${AUTH_SERVICE_URI:http://auth-service}
               predicates:
                 - Path=/api/auth/**
               filters:
@@ -49,7 +49,7 @@ spring:
 
             # Feed 서비스 라우팅
             - id: feed-service
-              uri: ${FEED_SERVICE_URI:http://localhost:8082}
+              uri: ${FEED_SERVICE_URI:http://feed-service}
               predicates:
                 - Path=/api/feed/**
               filters:
@@ -57,7 +57,7 @@ spring:
 
             # Chat 서비스 라우팅
             - id: chat-service
-              uri: ${CHAT_SERVICE_URI:http://localhost:8083}
+              uri: ${CHAT_SERVICE_URI:http://chat-service}
               predicates:
                 - Path=/api/chat/**
               filters:
