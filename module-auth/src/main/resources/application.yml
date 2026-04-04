@@ -79,9 +79,9 @@ jwt:
 
 logging:
   level:
-    root: DEBUG
-    org.hibernate.SQL: INFO
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    root: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.type.descriptor.sql.BasicBinder: ERROR
 
 server:
   port: 8081
