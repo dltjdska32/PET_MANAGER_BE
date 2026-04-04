@@ -14,6 +14,13 @@ management:
     redis:
       enabled: false  # Gateway 단독 인스턴스에 Redis 없을 수 있음 - health에서 제외
 
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    com.petmanager: INFO
+
 spring:
   application:
     name: module-gateway
