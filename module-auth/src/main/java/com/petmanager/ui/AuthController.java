@@ -184,28 +184,28 @@ public class AuthController {
 
 
     ///  웹 소셜 로그인 콜백
-    @Operation(
-            summary = "웹 전용 소셜로그인 콜백",
-            description = "웹 전용 소셜로그인 콜백 "
-    )
-    @GetMapping("/login/{provider}/callback")
-    public void webCallback(@PathVariable Provider provider,
-                                              @RequestParam String code,
-                                              HttpServletResponse res) throws IOException {
-
-
-
-        TokenRespDto dto = authService.handleWebCallback(provider, code);
-
-        jwtProvider.saveRefreshTokenToCookie(res, dto.refreshToken());
-
-        /// 엑세스 토큰 쿼리 파람에 담아줌
-        String redirectUrl = "http://localhost:3000/oauth/callback?token=" + dto.accessToken();
-
-        /// 리디렉션
-        res.sendRedirect(redirectUrl);
-    }
-
+//    @Operation(
+//            summary = "웹 전용 소셜로그인 콜백",
+//            description = "웹 전용 소셜로그인 콜백 "
+//    )
+//    @PostMapping("/login/{provider}/callback")
+//    public void webCallback(@PathVariable Provider provider,
+//                                              @RequestParam String code,
+//                                              HttpServletResponse res) throws IOException {
+//
+//
+//
+//        TokenRespDto dto = authService.handleWebCallback(provider, code);
+//
+//        jwtProvider.saveRefreshTokenToCookie(res, dto.refreshToken());
+//
+//        /// 엑세스 토큰 쿼리 파람에 담아줌
+//        String redirectUrl = "http://localhost:3000/oauth/callback?token=" + dto.accessToken();
+//
+//        /// 리디렉션
+//        res.sendRedirect(redirectUrl);
+//    }
+//
 
 
     /// 앱 소셜 로그인 콜백
@@ -214,10 +214,10 @@ public class AuthController {
               description = "앱 전용 소셜로그인 콜백 "
       )
     @PostMapping("/login/{provider}/callback")
-    public Response<TokenRespDto> appCallback(@PathVariable Provider provider,
+    public Response<SocialLoginRespDto> appCallback(@PathVariable Provider provider,
                                               @RequestBody @Valid SocialLoginDto reqDto) {
 
-        TokenRespDto respDto = authService.handleAppCallback(provider, reqDto.token());
+        SocialLoginRespDto respDto = authService.handleAppCallback(provider, reqDto.token());
 
         return Response.ok(respDto);
     }

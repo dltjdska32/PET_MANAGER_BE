@@ -66,7 +66,7 @@ public class AuthService {
 
 
     @Transactional(readOnly = false)
-    public TokenRespDto handleAppCallback(Provider provider, String token) {
+    public SocialLoginRespDto handleAppCallback(Provider provider, String token) {
 
         OAuthPort port = findOauthPort(provider);
 
@@ -74,12 +74,12 @@ public class AuthService {
         OAuth2UserInfo userInfo = port.getUserInfo(token);
 
         // oauth 유저 저장.
-        User user = userService.createOrGetOAuthUser(userInfo);
+        SocialLoginUserInfoDto getUserInfo = userService.createOrGetOAuthUser(userInfo);
 
         //응답 디티오 생성
-        TokenRespDto loginRespDto = createTokens(user);
+        TokenRespDto tokenRespDto = createTokens(getUserInfo.user());
 
-        return loginRespDto;
+        return new SocialLoginRespDto(tokenRespDto, getUserInfo.isNewUser());
     }
 
 
@@ -99,10 +99,10 @@ public class AuthService {
         OAuth2UserInfo userInfo = port.getUserInfo(oauthToken);
 
         // oauth 유저 저장.
-        User user = userService.createOrGetOAuthUser(userInfo);
+        SocialLoginUserInfoDto getUserInfo = userService.createOrGetOAuthUser(userInfo);
 
         //응답 디티오 생성
-        TokenRespDto loginRespDto = createTokens(user);
+        TokenRespDto loginRespDto = createTokens(getUserInfo.user());
 
         return loginRespDto;
     }
