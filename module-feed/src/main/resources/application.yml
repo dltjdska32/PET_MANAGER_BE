@@ -5,7 +5,7 @@ server:
 
 logging:
   level:
-    root: DEBUG
+    root: ERROR
 
 # Actuator (헬스체크) - CI 블루그린 배포용
 management:
