@@ -11,7 +11,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
         "com.petmanager.domain",      // module-auth의 엔티티
         "com.petmanager.entity"       // module-global의 공통 엔티티
 })
-public class ChatApplication {
+public class    ChatApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ChatApplication.class, args);
