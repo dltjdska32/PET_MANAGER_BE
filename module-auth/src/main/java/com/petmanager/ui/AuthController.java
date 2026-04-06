@@ -105,7 +105,7 @@ public class AuthController {
         return Response.ok(retVal);
     }
 
-    /// 유저 지역 설정
+    /// 유저 지역 조회
     @Operation(
             summary = "유저 지역 조회",
             description = "유저가 설정한 지역 조회"
