@@ -1,16 +1,13 @@
 package com.petmanager.config;
 
-import com.petmanager.exception.JwtException;
 import com.petmanager.utils.JwtUtil;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -49,13 +46,16 @@ public class UserInfoHeaderFilter implements GlobalFilter {
         String username = jwtUtil.getUsername(token);
         String userEmail = jwtUtil.getUserEmail(token);
 
-        /// 헤더에 유저 정보 담아준다.
-        exchange.getRequest().getHeaders().set(X_USER_ID_COOKIE_KEY, userId.toString());
-        exchange.getRequest().getHeaders().set(X_USER_ROLE_COOKIE_KEY, userRole);
-        exchange.getRequest().getHeaders().set(X_USER_NAME_COOKIE_KEY, username);
-        exchange.getRequest().getHeaders().set(X_USER_EMAIL_COOKIE_KEY, userEmail);
+        /// 헤더에 유저 정보 담아준다. (요청 mutate — 프록시 전달에 반영되도록)
+        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+                .header(X_USER_ID_COOKIE_KEY, userId.toString())
+                .header(X_USER_ROLE_COOKIE_KEY, userRole)
+                .header(X_USER_NAME_COOKIE_KEY, username)
+                .header(X_USER_EMAIL_COOKIE_KEY, userEmail)
+                .build();
+        ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
 
-        return chain.filter(exchange);
+        return chain.filter(mutatedExchange);
     }
 
 }
