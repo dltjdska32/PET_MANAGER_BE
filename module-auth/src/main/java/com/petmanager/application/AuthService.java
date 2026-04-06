@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -52,8 +53,8 @@ public class AuthService {
     }
 
 
-    public void getUserRegion(Long userId) {
-        userRegionService.findRegionIdByUserId(userId);
+    public List<Long> getUserRegion(Long userId) {
+        return userRegionService.findRegionIdByUserId(userId);
     }
 
     /// 리다이렉트 url.
@@ -79,7 +80,13 @@ public class AuthService {
         //응답 디티오 생성
         TokenRespDto tokenRespDto = createTokens(getUserInfo.user());
 
-        return new SocialLoginRespDto(tokenRespDto, getUserInfo.isNewUser());
+        List<Long> userRegionIds = new ArrayList<>();
+
+        if(!getUserInfo.isNewUser()) {
+            userRegionIds = userRegionService.findRegionIdByUserId(getUserInfo.user().getId());
+        }
+
+        return new SocialLoginRespDto(tokenRespDto, userRegionIds, getUserInfo.isNewUser());
     }
 
 
@@ -100,6 +107,8 @@ public class AuthService {
 
         // oauth 유저 저장.
         SocialLoginUserInfoDto getUserInfo = userService.createOrGetOAuthUser(userInfo);
+
+
 
         //응답 디티오 생성
         TokenRespDto loginRespDto = createTokens(getUserInfo.user());
