@@ -55,11 +55,22 @@ spring:
                 - StripPrefix=0
 
             # Feed 서비스 라우팅
+            # NOTE: feed 서비스가 context-path=/api/feed 를 사용해서
+            #       /api/feed 요청이 /api/feed/ 로 302 redirect 되는 케이스가 있음.
+            #       클라이언트에 302(내부 IP Location)가 노출되지 않도록, 루트 경로는 미리 /api/feed/ 로 보정한다.
+            - id: feed-service-root-slash
+              uri: ${FEED_SERVICE_URI:http://feed-service}
+              predicates:
+                - Path=/api/feed
+              filters:
+                - SetPath=/api/feed/
+
             - id: feed-service
               uri: ${FEED_SERVICE_URI:http://feed-service}
               predicates:
                 - Path=/api/feed/**
               filters:
+                - PreserveHostHeader
                 - StripPrefix=0
 
             # Chat 서비스 라우팅
