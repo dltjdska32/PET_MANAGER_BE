@@ -48,25 +48,26 @@ spring:
           routes:
             # Auth 서비스 라우팅
             - id: auth-service
-              uri: ${AUTH_SERVICE_URI:http://auth-service}
+              # 포트 미지정 시 기본 80으로 떨어지는 사고 방지
+              uri: ${AUTH_SERVICE_URI:8081}
               predicates:
                 - Path=/api/auth/**
               filters:
                 - StripPrefix=0
 
             # Feed 서비스 라우팅
-            # NOTE: feed 서비스가 context-path=/api/feed 를 사용해서
+            # feed 서비스가 context-path=/api/feed 를 사용해서
             #       /api/feed 요청이 /api/feed/ 로 302 redirect 되는 케이스가 있음.
             #       클라이언트에 302(내부 IP Location)가 노출되지 않도록, 루트 경로는 미리 /api/feed/ 로 보정한다.
             - id: feed-service-root-slash
-              uri: ${FEED_SERVICE_URI:http://feed-service}
+              uri: ${FEED_SERVICE_URI:8082}
               predicates:
                 - Path=/api/feed
               filters:
                 - SetPath=/api/feed/
 
             - id: feed-service
-              uri: ${FEED_SERVICE_URI:http://feed-service}
+              uri: ${FEED_SERVICE_URI:8082}
               predicates:
                 - Path=/api/feed/**
               filters:
@@ -75,7 +76,7 @@ spring:
 
             # Chat 서비스 라우팅
             - id: chat-service
-              uri: ${CHAT_SERVICE_URI:http://chat-service}
+              uri: ${CHAT_SERVICE_URI:8083}
               predicates:
                 - Path=/api/chat/**
               filters:
