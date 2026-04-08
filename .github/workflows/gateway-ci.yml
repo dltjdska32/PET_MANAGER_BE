@@ -232,6 +232,12 @@ jobs:
             docker rm $CONTAINER_NAME 2>/dev/null || true
             docker pull $DOCKERHUB_USERNAME/pet-manager-gateway:latest
 
+            if [ -z "$INTERNAL_AUTH_FEED_IP" ]; then
+              echo "::error::INTERNAL_AUTH_FEED_IP 시크릿이 비어있습니다. (AUTH/FEED URI 생성 불가)"
+              exit 1
+            fi
+            echo "INTERNAL_AUTH_FEED_IP=$INTERNAL_AUTH_FEED_IP"
+
             docker run -d \
               --name $CONTAINER_NAME \
               --restart always \
@@ -252,7 +258,11 @@ jobs:
               if [ $i -eq 15 ]; then
                 echo "::error::헬스체크 실패 (30초 초과, 마지막 응답: $CODE)"
                 echo "가능한 원인: 1) 앱 기동 지연 2) /actuator/health가 503(Redis 등) 3) 앱 크래시. 컨테이너 로그:"
-                docker logs $CONTAINER_NAME --tail 80
+                docker ps -a --filter "name=$CONTAINER_NAME" || true
+                echo "--- docker logs (tail 300) ---"
+                docker logs $CONTAINER_NAME --tail 300 || true
+                echo "--- docker inspect env ---"
+                docker inspect $CONTAINER_NAME --format='{{range .Config.Env}}{{println .}}{{end}}' | sed -E 's/(JWT_SECRET=).+/\1***MASKED***/' || true
                 exit 1
               fi
               sleep 2
