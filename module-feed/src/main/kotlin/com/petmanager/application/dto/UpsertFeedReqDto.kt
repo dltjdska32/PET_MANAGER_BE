@@ -16,7 +16,7 @@ data class UpsertFeedReqDto(
     @field:NotNull
     var userNickname: String? = null,
 
-    @field:Size(min = 1, max = 1, message = "메인 이미지는 필수 입니다.")
+    @field:Size(min = 0, max = 1, message = "메인 이미지는 최대 1장까지 가능합니다.")
     var mainImgs: List<MultipartFile>,
 
     @field:Size(min = 0, max = 5, message = "서브 이미지는 최대 5장까지 가능합니다.")
