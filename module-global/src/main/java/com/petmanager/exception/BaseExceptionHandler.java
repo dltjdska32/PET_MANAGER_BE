@@ -6,6 +6,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -85,9 +86,37 @@ public class BaseExceptionHandler {
 
 
         String msg = e.getBindingResult()
-                .getFieldErrors()
+                .getAllErrors()
                 .stream()
-                .map(ex -> ex.getField() + ": " + ex.getDefaultMessage())
+                .map(err -> {
+                    if (err instanceof org.springframework.validation.FieldError fe) {
+                        return fe.getField() + ": " + fe.getDefaultMessage();
+                    }
+                    return err.getObjectName() + ": " + err.getDefaultMessage();
+                })
+                .collect(Collectors.joining(", "));
+
+        log.error("{}: {}", HttpStatus.BAD_REQUEST, msg);
+
+        return Response.error(HttpStatus.BAD_REQUEST, "INVALID_PARAM", msg);
+    }
+
+
+    /// @ModelAttribute 바인딩/검증 예외 (multipart/form-data 포함)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @ExceptionHandler(BindException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Response<Void> handleBindException(BindException e){
+
+        String msg = e.getBindingResult()
+                .getAllErrors()
+                .stream()
+                .map(err -> {
+                    if (err instanceof org.springframework.validation.FieldError fe) {
+                        return fe.getField() + ": " + fe.getDefaultMessage();
+                    }
+                    return err.getObjectName() + ": " + err.getDefaultMessage();
+                })
                 .collect(Collectors.joining(", "));
 
         log.error("{}: {}", HttpStatus.BAD_REQUEST, msg);
