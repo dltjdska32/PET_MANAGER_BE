@@ -17,10 +17,10 @@ data class UpsertFeedReqDto(
     var userNickname: String? = null,
 
     @field:Size(min = 0, max = 1, message = "메인 이미지는 최대 1장까지 가능합니다.")
-    var mainImgs: List<MultipartFile>,
+    var mainImgs: List<MultipartFile> = emptyList(),
 
     @field:Size(min = 0, max = 5, message = "서브 이미지는 최대 5장까지 가능합니다.")
-    var sideImgs: List<MultipartFile>,
+    var sideImgs: List<MultipartFile> = emptyList(),
 
     @field:Length(max = 100, message = "제목은 최대 100자 이내로 입력 가능합니다.")
     @field:NotBlank(message = "제목은 필수입니다.")
