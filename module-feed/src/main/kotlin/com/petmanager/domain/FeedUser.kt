@@ -10,4 +10,5 @@ data class FeedUser(
     val email: String,
     val nickname: String,
     val regionIds: List<Long> = emptyList()
-)
+) {
+}

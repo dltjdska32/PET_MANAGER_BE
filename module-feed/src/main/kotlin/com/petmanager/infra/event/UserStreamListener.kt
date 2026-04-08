@@ -2,6 +2,7 @@ package com.petmanager.infra.event
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.petmanager.application.FeedEventService
 import com.petmanager.domain.FeedUser
 import com.petmanager.infra.mongo.FeedUserRepo
 import org.slf4j.LoggerFactory
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class UserStreamListener(
-    private val feedUserRepo: FeedUserRepo,
+    private val feedEventService: FeedEventService,
     private val objectMapper: ObjectMapper
 ) : StreamListener<String, MapRecord<String, String, String>> {
 
@@ -23,14 +24,17 @@ class UserStreamListener(
         val eventValue = map["value"]
 
         if (eventValue == null || eventType == null) {
-            log.warn("수신된 스트림 메시지 형식이 잘못되었습니다: {}", map)
+            log.warn("수신된 스트림 메시지 .형식이 잘못되었습니다: {}", map)
             return
         }
 
         try {
-            // ✅ auth-events 에서 USER_CREATED 이벤트 수신 시 MongoDB에 유저 정보 캐싱 (Upsert)
-            if (eventType == "USER_CREATED") {
-                val jsonNode = objectMapper.readTree(eventValue)
+
+            val jsonNode = objectMapper.readTree(eventValue)
+
+            // auth-events 에서 USER_CREATED 이벤트 수신 시 MongoDB에 유저 정보 캐싱 (Upsert)
+            if (eventType == UserEventType.USER_CREATED.name) {
+
                 val userId = jsonNode.get("userId")?.asLong() ?: return
 
                 // UserCreatedEvent 구조에 맞게 (email, nickname, regionIds) 추출
@@ -44,9 +48,7 @@ class UserStreamListener(
                     emptyList()
                 }
 
-                log.info("📢 Redis Stream 수신 (USER_CREATED): 유저ID={}, 이메일={}, 닉네임={}, 관할지역수={}", userId, email, nickname, regionIds.size)
-
-                feedUserRepo.save(
+                feedEventService.createdUserEvent(
                     FeedUser(
                         userId = userId,
                         email = email,
@@ -56,8 +58,43 @@ class UserStreamListener(
                 )
             }
 
-            // 추가: 닉네임 변경 등 다른 이벤트가 들어오면 여기서 분기 가능함.
-            // else if (eventType == "USER_NICKNAME_UPDATED") { ... }
+            if (eventType == UserEventType.USER_REGION_DELETED.name) {
+
+                val jsonNode = objectMapper.readTree(eventValue)
+                val userId = jsonNode.get("userId")?.asLong() ?: return
+
+                val getRegionIds = jsonNode.get("deletedRegionIds")
+                val regionIds: List<Long> = if (getRegionIds != null && getRegionIds.isArray) {
+                    objectMapper.convertValue(getRegionIds, object : TypeReference<List<Long>>() {})
+                } else {
+                    emptyList()
+                }
+
+                feedEventService.userRegionDeletedEvent(userId, regionIds)
+            }
+
+            if (eventType == UserEventType.USER_NICKNAME_UPDATED.name) {
+                val jsonNode = objectMapper.readTree(eventValue)
+                val userId = jsonNode.get("userId")?.asLong() ?: return
+                val nickName = jsonNode.get("nickname")?.asText() ?: "unknown"
+
+                feedEventService.userNicknameUpdatedEvent(userId, nickName)
+            }
+
+            if (eventType == UserEventType.USER_REGIONS_UPSERTED.name) {
+
+                val jsonNode = objectMapper.readTree(eventValue)
+                val userId = jsonNode.get("userId")?.asLong() ?: return
+
+                val getRegionIds = jsonNode.get("userRegionIds")
+                val regionIds: List<Long> = if (getRegionIds != null && getRegionIds.isArray) {
+                    objectMapper.convertValue(getRegionIds, object : TypeReference<List<Long>>() {})
+                } else {
+                    emptyList()
+                }
+
+                feedEventService.userRegionUpsertedEvent(userId, regionIds)
+            }
 
         } catch (e: Exception) {
             log.error("Redis Stream 유저 메시지 역직렬화 및 저장 실패 - eventValue: {}", eventValue, e)

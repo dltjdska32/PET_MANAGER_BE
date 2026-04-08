@@ -3,14 +3,12 @@ package com.petmanager.application
 import com.petmanager.application.dto.FindFeedReqDto
 import com.petmanager.application.dto.FindFeedRespDto
 import com.petmanager.application.dto.UpsertFeedReqDto
-import com.petmanager.application.event.FeedLikeEvent
 import com.petmanager.application.exception.FeedException
 import com.petmanager.config.GlobalConst
 import com.petmanager.domain.Feed
 import com.petmanager.dto.BasicUserInfo
 import com.petmanager.infra.mongo.FeedRepo
 import com.petmanager.util.S3ImgUploader
-import org.springframework.context.event.EventListener
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.stereotype.Service
@@ -23,14 +21,6 @@ class FeedService(
     private val s3ImgUploader: S3ImgUploader
 ) {
 
-    /**
-     * 좋아요 이벤트 구독 (피드 )
-     * 이벤트 퍼블리셔 사용해서 결합도를 낮춤
-     */
-    @EventListener
-    fun handleFeedLikeEvent(event: FeedLikeEvent) {
-        feedRepo.updateLikesCount(event.feedId, event.count)
-    }
 
     /**
      * 피드 삭제
