@@ -2,6 +2,7 @@ package com.petmanager.infra.event
 
 import com.petmanager.config.GlobalConst
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
@@ -15,6 +16,8 @@ import java.time.Duration
 
 @Configuration
 class RedisStreamConfig(
+    @Value("\${redis.stream.subscribe.consumer}")
+    private val consumerName: String,
     private val userStreamListener: UserStreamListener,
     private val stringRedisTemplate: StringRedisTemplate
 ) {
@@ -42,7 +45,7 @@ class RedisStreamConfig(
 
         // auth-events 스트림을 구독한다.
         val subscription = container.receive(
-            Consumer.from(GlobalConst.FEED_CONSUMER_GROUP, "feed-consumer-1"),
+            Consumer.from(GlobalConst.FEED_CONSUMER_GROUP, consumerName),
             StreamOffset.create(GlobalConst.AUTH_STREAM_KEY, ReadOffset.lastConsumed()),
             userStreamListener
         )
