@@ -246,6 +246,7 @@ jobs:
               -e JWT_SECRET="$JWT_SECRET" \
               -e AUTH_SERVICE_URI="http://$INTERNAL_AUTH_FEED_IP:8081" \
               -e FEED_SERVICE_URI="http://$INTERNAL_AUTH_FEED_IP:8082" \
+              -e CHAT_SERVICE_URI="http://$INTERNAL_AUTH_FEED_IP:8083" \
               $DOCKERHUB_USERNAME/pet-manager-gateway:latest
 
             echo "헬스체크 대기 (최대 30초)..."
@@ -263,6 +264,8 @@ jobs:
                 docker logs $CONTAINER_NAME --tail 300 || true
                 echo "--- docker inspect env ---"
                 docker inspect $CONTAINER_NAME --format='{{range .Config.Env}}{{println .}}{{end}}' | sed -E 's/(JWT_SECRET=).+/\1***MASKED***/' || true
+                echo "--- cleanup failed container ---"
+                docker rm -f $CONTAINER_NAME 2>/dev/null || true
                 exit 1
               fi
               sleep 2
