@@ -31,7 +31,8 @@ spring:
   # local: 로컬 개발 환경 (application-local.yml 자동 로드)
   # prod: 프로덕션 환경 (환경 변수 또는 application-prod.yml 사용)
   profiles:
-    active: local  # 로컬 개발 환경
+    # 컨테이너/운영에서 local 강제 로딩되면(application-local.yml 미존재) JWT_SECRET 미주입으로 기동 실패할 수 있음
+    active: ${SPRING_PROFILES_ACTIVE:prod}
 
   main:
     web-application-type: reactive
@@ -49,7 +50,7 @@ spring:
             # Auth 서비스 라우팅
             - id: auth-service
               # 포트 미지정 시 기본 80으로 떨어지는 사고 방지
-              uri: ${AUTH_SERVICE_URI:8081}
+              uri: ${AUTH_SERVICE_URI:http://auth-service:8081}
               predicates:
                 - Path=/api/auth/**
               filters:
@@ -60,14 +61,14 @@ spring:
             #       /api/feed 요청이 /api/feed/ 로 302 redirect 되는 케이스가 있음.
             #       클라이언트에 302(내부 IP Location)가 노출되지 않도록, 루트 경로는 미리 /api/feed/ 로 보정한다.
             - id: feed-service-root-slash
-              uri: ${FEED_SERVICE_URI:8082}
+              uri: ${FEED_SERVICE_URI:http://feed-service:8082}
               predicates:
                 - Path=/api/feed
               filters:
                 - SetPath=/api/feed/
 
             - id: feed-service
-              uri: ${FEED_SERVICE_URI:8082}
+              uri: ${FEED_SERVICE_URI:http://feed-service:8082}
               predicates:
                 - Path=/api/feed/**
               filters:
@@ -76,7 +77,7 @@ spring:
 
             # Chat 서비스 라우팅
             - id: chat-service
-              uri: ${CHAT_SERVICE_URI:8083}
+              uri: ${CHAT_SERVICE_URI:http://chat-service:8083}
               predicates:
                 - Path=/api/chat/**
               filters:
