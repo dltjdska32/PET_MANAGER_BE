@@ -2,10 +2,13 @@ server:
   port: 8082
   servlet:
     context-path: /api/feed
+  tomcat:
+    max-swallow-size: -1
+    max-http-form-post-size: -1
 
 logging:
   level:
-    root: ERROR
+    root: INFO
 
 # Actuator (헬스체크) - CI 블루그린 배포용
 management:
@@ -17,9 +20,6 @@ management:
     health:
       show-details: when_authorized
 
-spring:
-  application:
-    name: module-feed
 cloud:
   aws:
     credentials:
@@ -32,6 +32,22 @@ cloud:
       bucket: ${AWS_S3_BUCKET}
     stack:
       auto: false
+
+spring:
+  application:
+    name: module-feed
+
+  profiles:
+    active: local  # 로컬 개발 환경
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 100MB
+      file-size-threshold: 2MB
+
+
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI}
@@ -40,10 +56,6 @@ cloud:
       port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${SPRING_DATA_REDIS_PASSWORD:}
 
-jwt:
-  secret: ${JWT_SECRET:}
-  access-expiration: 1800000
-  refresh-expiration: 604800000
 
 restTemplate:
   connectTimeout: 7000

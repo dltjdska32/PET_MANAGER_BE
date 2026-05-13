@@ -1,10 +1,7 @@
 package com.petmanager.application;
 
 
-import com.petmanager.application.dto.CreateOriginUserDto;
-import com.petmanager.application.dto.OriginLoginReqDto;
-import com.petmanager.application.dto.SocialLoginUserInfoDto;
-import com.petmanager.application.dto.UpsertUserNicknameReqDto;
+import com.petmanager.application.dto.*;
 import com.petmanager.application.exception.AuthException;
 import com.petmanager.domain.User;
 import com.petmanager.domain.repo.UserRepo;
@@ -39,6 +36,17 @@ public class UserService {
 
         return user;
     }
+
+    @Transactional(readOnly = false)
+    public void upsertUserImg(Long userId, String urls) {
+
+        int rowCnt = userRepo.upsertUserImg(userId, urls);
+
+        if(rowCnt == 0) {
+            throw  AuthException.badRequest("프로필 이미지 등록에 실패했습니다.");
+        }
+    }
+
 
     @Transactional(readOnly = false)
     public SocialLoginUserInfoDto createOrGetOAuthUser(OAuth2UserInfo userInfo) {
@@ -94,8 +102,20 @@ public class UserService {
     }
 
 
+    @Transactional(readOnly = false)
     public void updateNickname(String nickname, Long userId) {
 
         int updatedCount = userRepo.updateNickname(nickname, userId);
+
+        if(updatedCount == 0) {
+            throw AuthException.badRequest("닉네임 변경에 실패했습니다.");
+        }
+    }
+
+    public FindUserImgRespDto findUserImgsById(Long userId) {
+
+        User user = userRepo.findById(userId).orElseThrow(() -> AuthException.badRequest("확인할 수 없는 유저입니다."));
+
+        return new FindUserImgRespDto(user.getUserMainImgUrl());
     }
 }

@@ -1,3 +1,137 @@
-version: '3.8'
+# 로컬 통합 인프라 (MySQL / Redis / MongoDB)
+# 사용법: 레포 루트에서
+#   cp .env.docker.example .env   (최초 1회, 값 수정 가능)
+#   docker compose up -d
+#
+# 다른 모듈 compose(module-auth 등)는 network name: pet-manager-network 로 붙습니다.
 
-# 각 서비스는 독립적인 docker-compose.yml로 관리
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: pet-manager-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-devroot}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-pet_manager_auth}
+      MYSQL_USER: ${MYSQL_USER:-lsn}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-devpass}
+      TZ: Asia/Seoul
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+09:00
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD:-devroot}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - pet-manager-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: pet-manager-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-devredis}"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-devredis}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - pet-manager-network
+
+
+
+#  MongoDB는 트랜잭션(Multi-document Transaction), Change Stream 같은 기능이 Replica Set 모드에서만 동작합니다.
+# 단일 standalone으로 띄우면 Spring Data Mongo에서 @Transactional이 터집니다.
+# 단일노드 RS를 띄워서 동일한 동작을 보장하려는 의도
+
+#restart: unless-stopped: 수동으로 docker stop하지 않는 한 장애 시 자동 재시작.
+#entrypoint 교체: 공식 이미지 기본 entrypoint를 무시하고 프로젝트의 entrypoint-rs.sh를 대신 실행.
+#                 이 스크립트가 mongod --replSet rs0 --keyFile /secrets/replica.key ... 식으로 띄우고 있을 것.
+#                 keyFile을 쓰는 이유는 auth + replica set 조합에선 내부 인증용 공유 키가 필수이기 때문.
+
+  mongodb:
+    image: mongo:7
+    container_name: pet-manager-mongodb
+    restart: unless-stopped
+    entrypoint: ["/bin/bash", "/entrypoint-rs.sh"]
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-devmongo}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-pet_manager_feed}
+    volumes:
+      - mongo_data:/data/db
+      - ./docker/mongo/replica.key:/secrets/replica.key:ro
+      - ./docker/mongo/entrypoint-rs.sh:/entrypoint-rs.sh:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'mongosh -u "$$MONGO_INITDB_ROOT_USERNAME" -p "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 }).ok" --quiet | grep -q 1',
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 25
+      start_period: 50s
+    networks:
+      - pet-manager-network
+
+
+
+# mongodb-init (RS 초기화 일회성 잡)
+# restart: "no" + 작업 끝나면 종료되는 one-shot job. 재시작 안 함.
+
+#실제 RS 초기화 로직이 든 셸 스크립트를 마운트하고 실행. 보통 내용은:
+  #mongosh로 mongodb 컨테이너 접속
+  #rs.status()가 실패하면 (= 아직 초기화 안 됨) rs.initiate(...) 실행
+  #PRIMARY가 될 때까지 polling → 종료
+  mongodb-init:
+    image: mongo:7
+    container_name: pet-manager-mongodb-init
+    restart: "no"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-devmongo}
+      MONGO_RS_MEMBER_HOST: ${MONGO_RS_MEMBER_HOST:-127.0.0.1:27017}
+    volumes:
+      - ./docker/mongo/rs-init.sh:/rs-init.sh:ro
+    networks:
+      - pet-manager-network
+    entrypoint: ["sh", "/rs-init.sh"]
+
+volumes:
+  mysql_data:
+  redis_data:
+  mongo_data:
+
+networks:
+  pet-manager-network:
+    name: pet-manager-network
+    driver: bridge

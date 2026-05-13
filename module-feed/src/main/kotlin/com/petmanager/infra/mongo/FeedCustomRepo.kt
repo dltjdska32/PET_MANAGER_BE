@@ -8,5 +8,6 @@ import org.springframework.data.domain.Slice
 
 interface FeedCustomRepo {
     fun findFeed(pageable: Pageable, req: FindFeedReqDto): Slice<FindFeedRespDto>
+    fun findUserFeed(pageable: Pageable, userId: String): Slice<FindFeedRespDto>
     fun updateLikesCount(id: String, count: Int)
 }

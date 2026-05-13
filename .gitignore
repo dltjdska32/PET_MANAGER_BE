@@ -55,6 +55,7 @@ out/
 .env
 .env.*
 !.env.example
+!.env.docker.example
 **/.env
 **/.env.local
 **/.env.prod

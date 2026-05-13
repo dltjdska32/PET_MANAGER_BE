@@ -1,5 +1,4 @@
 
-
 spring:
   task:
     scheduling:
@@ -30,9 +29,16 @@ spring:
   profiles:
     active: local  # 로컬 개발 환경
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 100MB
+      file-size-threshold: 2MB
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/pet_manager_auth?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/pet_manager_auth?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
     username: ${SPRING_DATASOURCE_USERNAME:}
     password: ${SPRING_DATASOURCE_PASSWORD:}
 
@@ -79,7 +85,7 @@ jwt:
 
 logging:
   level:
-    root: ERROR
+    root: WARN
     org.hibernate.SQL: ERROR
     org.hibernate.type.descriptor.sql.BasicBinder: ERROR
 
@@ -87,6 +93,9 @@ server:
   port: 8081
   servlet:
     context-path: /api/auth
+  tomcat:
+    max-swallow-size: -1
+    max-http-form-post-size: -1
 
 # Actuator (헬스체크 등) - CI 블루그린 배포용
 management:

@@ -88,6 +88,22 @@ public class JwtProvider {
 
 
     /**
+     * refreshToken 만료 여부 검증.
+     * 만료·위변조 시 false 반환.
+     */
+    public boolean isRefreshTokenValid(String token) {
+        try {
+            Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    /**
      * refreshToken을 쿠키에 저장 - 앱일경우 사용 x
      */
     public void saveRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {

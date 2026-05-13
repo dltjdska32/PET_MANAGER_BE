@@ -13,20 +13,26 @@ public record SaveUserRegionReqDto (@Size(max = 3, message = "추가 지역은 �
                                     List<Long> deleteRegionIds) {
 
 
-    ///  추가 지역이 있고
-    ///  삭제 지역이 없고
-    public boolean isSaveLogic() {
-
-        boolean isSaveLogic = false;
-
-        if ((this.addRegionIds() != null && !this.addRegionIds().isEmpty())
-                && (this.deleteRegionIds() == null || this.deleteRegionIds().isEmpty())) {
-
-            isSaveLogic = true;
-        }
-
-        return isSaveLogic;
+    ///  널값을 빈리스트로 변경
+    public SaveUserRegionReqDto {
+        addRegionIds = (addRegionIds == null) ? List.of() : addRegionIds;
+        deleteRegionIds = (deleteRegionIds == null) ? List.of() : deleteRegionIds;
     }
+
+//    ///  추가 지역이 있고
+//    ///  삭제 지역이 없고
+//    public boolean isSaveLogic() {
+//
+//        boolean isSaveLogic = false;
+//
+//        if ((this.addRegionIds() != null && !this.addRegionIds().isEmpty())
+//                && (this.deleteRegionIds() == null || this.deleteRegionIds().isEmpty())) {
+//
+//            isSaveLogic = true;
+//        }
+//
+//        return isSaveLogic;
+//    }
 
 
 }

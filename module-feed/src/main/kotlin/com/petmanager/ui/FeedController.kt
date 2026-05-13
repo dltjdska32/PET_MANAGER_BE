@@ -2,6 +2,7 @@ package com.petmanager.ui
 
 import com.petmanager.application.FeedService
 import com.petmanager.application.dto.FindFeedReqDto
+import com.petmanager.application.dto.FindFeedDetailRespDto
 import com.petmanager.application.dto.FindFeedRespDto
 import com.petmanager.application.dto.UpsertFeedReqDto
 import com.petmanager.config.Response
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @Tag(name = "FEED-API", description = "피드 관련 API 엔드포인트")
 class FeedController(
+
     private val feedService: FeedService
 ) {
 
@@ -56,8 +58,28 @@ class FeedController(
     @GetMapping
     @Operation(summary = "피드 검색 및 필터링", description = "키워드, 타입, 지역별로 피드를 조회.")
     fun findFeed(@PageableDefault(size = 20) pageable: Pageable,
+                      @AuthenticationPrincipal user: BasicUserInfo?,
                       @ModelAttribute @Valid req: FindFeedReqDto): Response<Slice<FindFeedRespDto>> {
-        return Response.ok(feedService.findFeed(pageable, req))
+
+        var userId : Long? = user?.userId()
+
+
+        return Response.ok(feedService.findFeed(pageable, req, userId))
+    }
+
+
+    /**
+     * 내 게시글 보기
+     */
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/me")
+    @Operation(summary = "내 게시글 조회", description = "유저의 게시글 조회.")
+    fun findUserFeed(@PageableDefault(size = 20) pageable: Pageable,
+                 @AuthenticationPrincipal user: BasicUserInfo): Response<Slice<FindFeedRespDto>> {
+
+        val userId : Long = user.userId()
+
+        return Response.ok(feedService.findUserFeed(pageable, userId))
     }
 
     /**
@@ -65,7 +87,10 @@ class FeedController(
      */
     @GetMapping("/{id}")
     @Operation(summary = "피드 상세 조회", description = "피드 ID로 상세 정보를 조회.")
-    fun findFeedDetails(@PathVariable id: String): Response<Feed> {
-        return Response.ok(feedService.findFeedById(id))
+    fun findFeedDetails(
+        @PathVariable id: String,
+        @AuthenticationPrincipal user: BasicUserInfo?
+    ): Response<FindFeedDetailRespDto> {
+        return Response.ok(feedService.findFeedById(id, user?.userId()))
     }
 }

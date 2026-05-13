@@ -1,16 +1,19 @@
 package com.petmanager.application
 
 import com.petmanager.application.dto.FindFeedReqDto
+import com.petmanager.application.dto.FindFeedDetailRespDto
 import com.petmanager.application.dto.FindFeedRespDto
 import com.petmanager.application.dto.UpsertFeedReqDto
 import com.petmanager.application.exception.FeedException
 import com.petmanager.config.GlobalConst
 import com.petmanager.domain.Feed
 import com.petmanager.dto.BasicUserInfo
+import com.petmanager.infra.mongo.FeedLikeRepo
 import com.petmanager.infra.mongo.FeedRepo
 import com.petmanager.util.S3ImgUploader
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
+import org.springframework.data.domain.SliceImpl
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class FeedService(
     private val feedRepo: FeedRepo,
+    private val feedLikeRepo: FeedLikeRepo,
     private val s3ImgUploader: S3ImgUploader
 ) {
 
@@ -44,12 +48,35 @@ class FeedService(
     }
 
     /**
+     *     유저 피드 조회
+     */
+    fun findUserFeed(pageable: Pageable, userId: Long): Slice<FindFeedRespDto> {
+
+        val slice : Slice<FindFeedRespDto> = feedRepo.findUserFeed(pageable, userId.toString())
+
+        if (slice.content.isEmpty()) {
+            return slice
+        }
+
+        val feedIds = slice.content.map { it.id }
+        val likedFeedIdSet = feedLikeRepo
+            .findByUserIdAndFeedIdIn(userId.toString(), feedIds)
+            .asSequence()
+            .map { it.feedId }
+            .toSet()
+
+        val mapped = slice.content.map { dto ->
+            dto.copy(isLiked = likedFeedIdSet.contains(dto.id))
+        }
+
+        return SliceImpl(mapped, pageable, slice.hasNext())
+    }
+
+    /**
      * 피드 업서트
      */
     @Transactional(readOnly = false)
     fun upsertFeed(req: UpsertFeedReqDto, user: BasicUserInfo) {
-
-
 
         if (req.feedId == null) {
             createFeed(req, user)
@@ -137,14 +164,33 @@ class FeedService(
     /**
      * 피드 전체 조회
      */
-    fun findFeed(pageable: Pageable, req: FindFeedReqDto): Slice<FindFeedRespDto> {
-        return feedRepo.findFeed(pageable, req)
+    fun findFeed(pageable: Pageable, req: FindFeedReqDto, userId: Long? ): Slice<FindFeedRespDto> {
+
+        val slice: Slice<FindFeedRespDto> = feedRepo.findFeed(pageable, req)
+
+        // 게스트거나 결과가 없으면 그대로 반환 (isLiked 기본 false)
+        if (userId == null || slice.content.isEmpty()) {
+            return slice
+        }
+
+        val feedIds = slice.content.map { it.id }
+        val likedFeedIdSet = feedLikeRepo
+            .findByUserIdAndFeedIdIn(userId.toString(), feedIds)
+            .asSequence()
+            .map { it.feedId }
+            .toSet()
+
+        val mapped = slice.content.map { dto ->
+            dto.copy(isLiked = likedFeedIdSet.contains(dto.id))
+        }
+
+        return SliceImpl(mapped, pageable, slice.hasNext())
     }
 
     /**
      * 피드 상세 조회
      */
-    fun findFeedById(id: String): Feed {
+    fun findFeedById(id: String, userId: Long?): FindFeedDetailRespDto {
         val feed = feedRepo.findById(id).orElseThrow {
             FeedException.notFound("해당 피드를 찾을 수 없습니다.")
         }
@@ -153,6 +199,30 @@ class FeedService(
             throw FeedException.notFound("이미 삭제된 피드입니다.")
         }
 
-        return feed
+        val isLiked = userId?.let {
+            feedLikeRepo.findByUserIdAndFeedId(it.toString(), feed.id!!).isPresent
+        } ?: false
+
+        return FindFeedDetailRespDto(
+            id = feed.id!!,
+            authorId = feed.authorId,
+            username = feed.username,
+            authorNickname = feed.authorNickname,
+            title = feed.title,
+            description = feed.description,
+            regionId = feed.regionId,
+            mainImgUrl = feed.mainImgUrl,
+            sideImgUrl = feed.sideImgUrl,
+            pay = feed.pay,
+            startDate = feed.startDate,
+            endDate = feed.endDate,
+            likesCount = feed.likesCount,
+            feedType = feed.feedType,
+            createdAt = feed.createdAt,
+            updatedAt = feed.updatedAt,
+            isLiked = isLiked
+        )
     }
+
+
 }

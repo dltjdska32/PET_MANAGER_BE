@@ -32,4 +32,6 @@ public abstract class GlobalConst {
 
     public static final String FEED_IMG_DIR = "feed-img";
 
+    public static final String AUTH_IMG_DIR = "auth-img";
+
 }

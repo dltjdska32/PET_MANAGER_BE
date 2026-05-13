@@ -7,4 +7,5 @@ data class FindFeedRespDto (
     var likesCount: Int,
     var regionId: Long,
     var authorNickname: String,
+    var isLiked: Boolean = false,
 )

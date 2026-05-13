@@ -43,6 +43,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Role role;
 
+    ///  이후 메인이미지가 2개 3개로 늘어날경우 정규화 필요.
     private String userMainImgUrl;
 
     @Enumerated(EnumType.STRING)
