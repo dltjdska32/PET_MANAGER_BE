@@ -25,7 +25,7 @@ public class RefreshTokenRedisRepoImpl implements RefreshTokenRedisRepo {
     public void saveRefreshToken(Long userId, String refreshToken) {
         String key = createKey(refreshToken);
 
-        stringRedisTemplate.opsForValue().set(key, String.valueOf(userId), Duration.ofSeconds(refreshExpiration));
+        stringRedisTemplate.opsForValue().set(key, String.valueOf(userId), Duration.ofMillis(refreshExpiration));
     }
 
 

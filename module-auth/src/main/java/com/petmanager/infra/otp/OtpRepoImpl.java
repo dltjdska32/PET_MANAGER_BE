@@ -13,7 +13,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class OtpRepoImpl implements OtpRepo {
 
-    private static final String OTP_PREFIX = "OTP-KEY:";
+        private static final String OTP_PREFIX = "OTP-KEY:";
 
     private final StringRedisTemplate stringRedisTemplate;
 

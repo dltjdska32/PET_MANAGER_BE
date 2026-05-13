@@ -12,7 +12,6 @@ import java.time.Duration
 
 /**
  * Redis Stream Consumer Group PEL(pending) 재처리 워커.
- *
  * - 성공: XACK
  * - 실패: ACK하지 않고 PEL에 남김 (다음 라운드에 reclaim 대상)
  * - 최대 재시도 초과: DLQ 스트림으로 이동 후 XACK
@@ -87,11 +86,11 @@ class RedisStreamRetryScheduler(
 
         /*
         * 내부적으로 Redis 명령 XCLAIM을 날려서,
-        * “이 pending 메시지들을 다른 consumer가 들고 있던 걸 내가 가져와서(소유권 변경) 다시 처리하겠다”를 하는 함수야.
+        * “이 pending 메시지들을 다른 consumer가 들고 있던 걸 내가 가져와서(소유권 변경) 다시 처리하겠다”를 하는 함수
         * 파라미터 의미는:
         * AUTH_STREAM_KEY = 어떤 스트림에서
-        * FEED_CONSUMER_GROUP = 어떤 그룹의 pending을
-        * retryConsumerName = 어느 consumer에게 넘길지
+        * FEED_CONSMER_GROUP = 어떤 그룹의 pending을
+        * retryConsumerName = 어느 consumer에게 넘길지U
         *    Duration.ofMillis(minIdleMs) = 이만큼 idle 이상인 것만 claim 가능(중복 방지)
         *   ids... = 어떤 메시지 id들을 claim할지
         *   그리고 claim()의 리턴은 실제 메시지 본문(MapRecord) 까지 같이 돌려줘서, 바로 처리할 수 있음.

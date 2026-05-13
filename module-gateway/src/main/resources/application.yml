@@ -32,7 +32,8 @@ spring:
   # prod: 프로덕션 환경 (환경 변수 또는 application-prod.yml 사용)
   profiles:
     # 컨테이너/운영에서 local 강제 로딩되면(application-local.yml 미존재) JWT_SECRET 미주입으로 기동 실패할 수 있음
-    active: ${SPRING_PROFILES_ACTIVE:prod}
+    active: local
+
 
   main:
     web-application-type: reactive

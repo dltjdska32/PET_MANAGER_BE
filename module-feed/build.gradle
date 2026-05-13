@@ -5,6 +5,10 @@ plugins {
     id 'org.jetbrains.kotlin.kapt'
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 ext {
     QUERYDSL_VERSION = "5.0.0"
     WEBMVC_VERSION = "2.8.13"

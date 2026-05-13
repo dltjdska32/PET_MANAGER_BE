@@ -17,10 +17,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import java.io.IOException;
 import java.util.Arrays;
 
 
@@ -150,6 +150,33 @@ public class AuthController {
         return Response.ok();
     }
 
+
+    /// 유저 프로필 이미지 조회.
+    @Operation(
+            summary = "유저 프로필 이미지 조회",
+            description = "유저 프로필 이미지 조회"
+    )
+    @GetMapping("/user/imgs")
+    @PreAuthorize("hasRole('USER')")
+    public Response<FindUserImgRespDto> updateNickname (@AuthenticationPrincipal BasicUserInfo user) {
+
+        return Response.ok( authService.findUserImgs(user));
+    }
+
+    /// 유저 프로필 이미지 업서트
+    @Operation(
+            summary = "유저 프로필 이미지 수정 (upsert)",
+            description = "유저 프로필 이미지 수정 (upsert)"
+    )
+    @PatchMapping(value = "/user/imgs" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('USER')")
+    public Response<Void> upsertProfileImg (@ModelAttribute @Valid UpsertProfileImgReqDto dto,
+                                          @AuthenticationPrincipal BasicUserInfo user) {
+
+        authService.upsertUserProfileImg(dto, user);
+
+        return Response.ok();
+    }
 
 
     @Operation(

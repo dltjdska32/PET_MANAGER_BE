@@ -51,7 +51,7 @@ public class UserHeaderFilter extends OncePerRequestFilter {
 
             Authentication auth = new UsernamePasswordAuthenticationToken(userInfo, null, authorities);
 
-            ///  Spring Security는 내부적으로 돌아갈 때 Authentication 객체가 무조건 필요합니다.
+            ///  Spring Security는 내부적으로 돌아갈 때 Authentication 객체가 무조건 필요.
             ///  세션 처럼 서버내에 계속 저장하는것이 아닌 응답을 보내고 해당 객체는 제거됨.
             SecurityContextHolder.getContext().setAuthentication(auth);
         }

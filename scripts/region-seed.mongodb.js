@@ -1,4 +1,5 @@
 // collection: region (com.petmanager.domain.Region)
+// MySQL 동일 데이터: scripts/region-seed.mysql.sql
 // mongosh: load('scripts/region-seed.mongodb.js') 또는 DB 선택 후 실행
 // DB 이름은 환경에 맞게 변경하세요.
 use lsn;

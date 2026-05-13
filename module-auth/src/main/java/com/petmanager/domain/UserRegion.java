@@ -18,11 +18,17 @@ public class UserRegion extends BaseEntity {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(
+            name = "user_id",
+            foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+    )
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "region_id")
+    @JoinColumn(
+            name = "region_id",
+            foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+    )
     private Region region;
 
     public static UserRegion to(User user,  Region region){

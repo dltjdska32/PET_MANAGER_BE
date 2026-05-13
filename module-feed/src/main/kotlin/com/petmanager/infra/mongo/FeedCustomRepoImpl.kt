@@ -80,6 +80,29 @@ class FeedCustomRepoImpl(
         return SliceImpl(results, pageable, hasNext)
     }
 
+    override fun findUserFeed(pageable: Pageable, userId: String): Slice<FindFeedRespDto> {
+        val query = Query()
+        query.addCriteria(Criteria.where("isDeleted").`is`(false))
+        query.addCriteria(Criteria.where("authorId").`is`(userId))
+
+        // 프로젝션 (목록 화면과 동일 스펙)
+        query.fields().include("id", "title", "mainImgUrl", "likesCount", "regionId", "authorNickname", "createdAt")
+
+        query.with(Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("_id")))
+        query.limit(pageable.pageSize + 1)
+
+        val content = mongoTemplate.find(query, FindFeedRespDto::class.java, "feed")
+
+        var results = content
+        val hasNext = content.size > pageable.pageSize
+
+        if (hasNext) {
+            results = content.subList(0, pageable.pageSize)
+        }
+
+        return SliceImpl(results, pageable, hasNext)
+    }
+
     /**
      *  좋아요수 원자적 증감 (Atomic $inc)
      */

@@ -29,27 +29,25 @@ public class UserRegionService {
     @Transactional(readOnly = false)
     public List<Long> upsertUserRegions(SaveUserRegionReqDto dto, User user) {
 
-        Integer userRegionCount = userRegionRepo.countByUserId(user.getId());
+        int userRegionCount = userRegionRepo.countByUserId(user.getId());
 
-        List<Long> retVal;
+        if (userRegionCount == 0) { /// 지역 추가
 
-        if (dto.isSaveLogic() && userRegionCount == 0) {
-
-            retVal = saveUserRegion(dto.addRegionIds(), user);
+            saveUserRegion(dto.addRegionIds(), user);
         } else {   /// 위에 걸리지 않는다면 모두 업데이트
 
-            retVal = updateUserRegion(dto, user, userRegionCount);
+            updateUserRegion(dto, user, userRegionCount);
         }
 
-        return retVal;
+        return findRegionIdByUserId(user.getId());
     }
 
     ///  유저가 설정한 지역 저장 메서드
     @Transactional(readOnly = false)
-    public List<Long> saveUserRegion(List<Long> addRegionIds, User user) {
+    public void saveUserRegion(List<Long> addRegionIds, User user) {
 
         if(addRegionIds == null || addRegionIds.isEmpty()) {
-            return Collections.emptyList();
+            return;
         }
 
         List<UserRegion> userRegions = new ArrayList<>();
@@ -66,16 +64,12 @@ public class UserRegionService {
             userRegions.add(userRegion);
         }
 
-        List<UserRegion> savedUserRegions = userRegionRepo.saveAll(userRegions);
-
-
-        return savedUserRegions.stream()
-                .map(UserRegion::getId).toList();
+        userRegionRepo.saveAll(userRegions);
     }
 
 
     /// 유저가 설정한 지역 업데이트 메서드
-    public List<Long> updateUserRegion(SaveUserRegionReqDto dto, User user, int userRegionCount) {
+    public void updateUserRegion(SaveUserRegionReqDto dto, User user, int userRegionCount) {
 
         int updatedUserRegionCount = userRegionCount + dto.addRegionIds().size() - dto.deleteRegionIds().size();
 
@@ -84,7 +78,7 @@ public class UserRegionService {
         /// 지역 삭제
         deleteUserRegions(dto.deleteRegionIds(), user);
         /// 지역 저장
-        return saveUserRegion(dto.addRegionIds(), user);
+        saveUserRegion(dto.addRegionIds(), user);
     }
 
     /// 유저 지역 삭제
@@ -96,7 +90,7 @@ public class UserRegionService {
 
         UserRegion.validDeleteUserRegionCount(checkDeleteSize);
 
-        Long deletedCount = userRegionRepo.deleteUserRegionByuserIds(deleteUserRegions);
+        int deletedCount = userRegionRepo.deleteUserRegionByRegionIdsAndUserId(deleteUserRegions, user.getId());
 
         if (deletedCount != deleteUserRegions.size()) {
             throw AuthException.badRequest("유저의 지역 삭제 실패 : 삭제할 수 있는 요청량 초과");

@@ -37,6 +37,8 @@ class UserStreamListener(
             val jsonNode = objectMapper.readTree(eventValue)
 
             // auth-events 에서 USER_CREATED 이벤트 수신 시 MongoDB에 유저 정보 캐싱 (Upsert)
+
+            /// 유저 생성
             if (eventType == UserEventType.USER_CREATED.name) {
 
                 val userId = jsonNode.get("userId")?.asLong() ?: return
@@ -62,6 +64,7 @@ class UserStreamListener(
                 )
             }
 
+            // 유저-지역 삭제
             if (eventType == UserEventType.USER_REGION_DELETED.name) {
 
                 val jsonNode = objectMapper.readTree(eventValue)
@@ -77,6 +80,7 @@ class UserStreamListener(
                 feedEventService.userRegionDeletedEvent(userId, regionIds)
             }
 
+            // 유저-닉네임 변경
             if (eventType == UserEventType.USER_NICKNAME_UPDATED.name) {
                 val jsonNode = objectMapper.readTree(eventValue)
                 val userId = jsonNode.get("userId")?.asLong() ?: return
@@ -85,6 +89,7 @@ class UserStreamListener(
                 feedEventService.userNicknameUpdatedEvent(userId, nickName)
             }
 
+            // 유저-지역 업서트
             if (eventType == UserEventType.USER_REGIONS_UPSERTED.name) {
 
                 val jsonNode = objectMapper.readTree(eventValue)

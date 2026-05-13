@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class BaseEntity {
 
-    private Boolean isDeleted;
+
+    private boolean isDeleted;
 
     @CreatedDate
     @Column(updatable = false)

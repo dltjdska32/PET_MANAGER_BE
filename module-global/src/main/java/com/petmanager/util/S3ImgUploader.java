@@ -1,7 +1,9 @@
 package com.petmanager.util;
 
+import com.petmanager.config.GlobalConst;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,6 +11,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -31,31 +34,64 @@ public class S3ImgUploader {
     @Value("${cloud.aws.region.static}")
     private String region;
 
-    // 💡 가상 스레드 풀 생성
+    private static final int PROFILE_SIZE = 512;
+    private static final int GENERAL_MAX_SIZE = 1080;
+    private static final double COMPRESSION_QUALITY = 0.8;
+
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     /**
      * 단일 저장
      */
     public String uploadFile(MultipartFile file, String dirName) {
-        /// 이미지파일인지 확인
         validateImageFile(file);
 
         String fileName = generateFileName(file.getOriginalFilename(), dirName);
+        boolean isProfile = GlobalConst.AUTH_IMG_DIR.equals(dirName);
 
         try {
+            byte[] resized = isProfile ? resizeProfile(file) : resizeGeneral(file);
+
             s3Client.putObject(PutObjectRequest.builder()
                     .bucket(bucket)
                     .key(fileName)
-                    .contentType(file.getContentType())
+                    .contentType("image/jpeg")
                     .build(),
-                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+                    RequestBody.fromBytes(resized));
 
             return buildS3Url(fileName);
         } catch (IOException e) {
             log.error("S3 단일 업로드 실패: {}", e.getMessage());
             throw new RuntimeException("S3 업로드 에러 발생", e);
         }
+    }
+
+    /** 프로필: 512x512, 80% */
+    private byte[] resizeProfile(MultipartFile file) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        Thumbnails.of(file.getInputStream())
+                .size(PROFILE_SIZE, PROFILE_SIZE)
+                .keepAspectRatio(true)
+                .outputFormat("jpg")
+                .outputQuality(COMPRESSION_QUALITY)
+                .toOutputStream(baos);
+
+        return baos.toByteArray();
+    }
+
+    /** 피드/채팅 등: 긴 변 1080px, 80% */
+    private byte[] resizeGeneral(MultipartFile file) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        Thumbnails.of(file.getInputStream())
+                .size(GENERAL_MAX_SIZE, GENERAL_MAX_SIZE)
+                .keepAspectRatio(true)
+                .outputFormat("jpg")
+                .outputQuality(COMPRESSION_QUALITY)
+                .toOutputStream(baos);
+
+        return baos.toByteArray();
     }
 
     /**

@@ -7,6 +7,7 @@ import com.petmanager.application.port.OtpPort;
 import com.petmanager.application.dto.*;
 import com.petmanager.application.exception.AuthException;
 import com.petmanager.application.port.OutboxPort;
+import com.petmanager.config.GlobalConst;
 import com.petmanager.domain.User;
 import com.petmanager.domain.enums.Provider;
 import com.petmanager.dto.BasicUserInfo;
@@ -14,6 +15,7 @@ import com.petmanager.infra.oauth.OAuth2UserInfo;
 import com.petmanager.infra.jwt.JwtProvider;
 import com.petmanager.infra.outbox.AuthOutbox;
 import com.petmanager.infra.outbox.AuthOutboxRepo;
+import com.petmanager.util.S3ImgUploader;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -41,6 +43,7 @@ public class AuthService {
     private final JavaMailSender javaMailSender;
     private final OutboxPort outboxPort;
     private final EventPublisher eventPublisher;
+    private final S3ImgUploader s3ImgUploader;
 
 
     /// 일반 회원로그인
@@ -129,10 +132,12 @@ public class AuthService {
     public void join(CreateOriginUserDto dto) {
 
         User savedUser = userService.join(dto);
-        /// 유저 지역 저장
-        List<Long> userReionids = userRegionService.saveUserRegion(dto.regionIds(), savedUser);
 
-        UserCreatedEvent event = UserCreatedEvent.of(savedUser, userReionids);
+        /// 유저 지역 저장
+        userRegionService.saveUserRegion(dto.regionIds(), savedUser);
+
+        ///  유저지역이 저장되면 메시지 발송
+        UserCreatedEvent event = UserCreatedEvent.of(savedUser, dto.regionIds());
 
         outboxPort.saveEvent(event);
     }
@@ -140,6 +145,7 @@ public class AuthService {
     /// 유저 지역 업서트
     @Transactional(readOnly=false)
     public void upsertUserRegions(SaveUserRegionReqDto dto, long userId) {
+
         User user = userService.findById(userId);
         List<Long> retVal = userRegionService.upsertUserRegions(dto, user);
 
@@ -147,6 +153,7 @@ public class AuthService {
 
         outboxPort.saveEvent(event);
     }
+
 
     @Transactional(readOnly=false)
     public void updateNickname(UpsertUserNicknameReqDto dto, BasicUserInfo userInfo) {
@@ -177,8 +184,13 @@ public class AuthService {
         outboxPort.saveEvent(event);
     }
 
-    ///  토큰 재발급.
+    ///  토큰 재발급 (RTR)
     public TokenRespDto reissueToken(String refreshToken) {
+
+        if (!jwtProvider.isRefreshTokenValid(refreshToken)) {
+            jwtPort.deleteRefreshToken(refreshToken);
+            throw AuthException.unauthorized("리프레시 토큰이 만료되었습니다. 재로그인이 필요합니다.");
+        }
 
         Long userId = jwtPort.findUserId(refreshToken)
                 .orElseThrow(() -> AuthException.unauthorized("토큰이 만료되었습니다. 재로그인이 필요합니다."));
@@ -209,6 +221,17 @@ public class AuthService {
         javaMailSender.send(sendOtpDto);
     }
 
+
+
+    @Transactional(readOnly = false)
+    public void upsertUserProfileImg(UpsertProfileImgReqDto dto, BasicUserInfo user) {
+
+        // 현재 프로필 이미지의 경우 user 필드내에 반정규화 되어있음
+        // 만약 프로필 이미지를 복수로 받을경우 uploadFiles()를 사용하고 DB도 정규화 필요.
+        String urls = s3ImgUploader.uploadFile(dto.userProfileImgs().get(0), GlobalConst.AUTH_IMG_DIR);
+
+        userService.upsertUserImg(user.userId(), urls);
+    }
 
     public void validOtp(ValidateOtpDto dto) {
 
@@ -252,5 +275,7 @@ public class AuthService {
     }
 
 
-
+    public FindUserImgRespDto findUserImgs(BasicUserInfo user) {
+        return userService.findUserImgsById(user.userId());
+    }
 }
