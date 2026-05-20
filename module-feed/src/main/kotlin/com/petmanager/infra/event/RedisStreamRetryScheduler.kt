@@ -68,7 +68,7 @@ class RedisStreamRetryScheduler(
             /// 어떤 consumer에게 전달된 이후 얼마나 시간이 흘렀는지(ms)
             val idleMs = p.elapsedTimeSinceLastDelivery.toMillis()
 
-            // 재시도가 특정횟수 이상일경우 dlq로 보내고 ack처리
+            // 재시도가 특정횟수 이상일경우 dlq(auth-feed용 dlq 스트림)로 보내고 ack처리
             if (deliveries >= maxDeliveries) {
                 moveToDlqAndAck(p.id, deliveries, idleMs)
                 continue
@@ -92,6 +92,10 @@ class RedisStreamRetryScheduler(
         * FEED_CONSMER_GROUP = 어떤 그룹의 pending을
         * retryConsumerName = 어느 consumer에게 넘길지U
         *    Duration.ofMillis(minIdleMs) = 이만큼 idle 이상인 것만 claim 가능(중복 방지)
+        *       -> minIdle 동안은 다른 컨슈머가 해당 데이터를 가로채가지못함.
+        *           -> 해당 컨슈머가 메시지를 처리할 시간 확보.
+        *
+        *
         *   ids... = 어떤 메시지 id들을 claim할지
         *   그리고 claim()의 리턴은 실제 메시지 본문(MapRecord) 까지 같이 돌려줘서, 바로 처리할 수 있음.
         * */

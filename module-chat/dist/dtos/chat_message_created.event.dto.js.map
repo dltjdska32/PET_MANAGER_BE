@@ -1,0 +1,1 @@
+{"version":3,"file":"chat_message_created.event.dto.js","sourceRoot":"","sources":["../../src/dtos/chat_message_created.event.dto.ts"],"names":[],"mappings":";;;AAEa,QAAA,oBAAoB,GAAG,sBAAsB,CAAC;AAE3D,MAAa,uBAAuB;IAEhB;IACA;IAFlB,YACkB,MAAc,EACd,OAA2B;QAD3B,WAAM,GAAN,MAAM,CAAQ;QACd,YAAO,GAAP,OAAO,CAAoB;IAC1C,CAAC;CACL;AALD,0DAKC"}

@@ -10,4 +10,5 @@ interface FeedCustomRepo {
     fun findFeed(pageable: Pageable, req: FindFeedReqDto): Slice<FindFeedRespDto>
     fun findUserFeed(pageable: Pageable, userId: String): Slice<FindFeedRespDto>
     fun updateLikesCount(id: String, count: Int)
+    fun updateAuthorNicknameByAuthorId(authorId: String, authorNickname: String)
 }

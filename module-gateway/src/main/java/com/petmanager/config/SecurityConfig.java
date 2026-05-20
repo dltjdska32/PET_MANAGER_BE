@@ -34,7 +34,11 @@
                 "/api/chat/v3/api-docs/**",
 
                 // Actuator
-                "/actuator/**"
+                "/actuator/**",
+                
+
+                /// 소켓 연결 허용
+                "/socket.io/**",
         };
 
         @Bean

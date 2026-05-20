@@ -25,4 +25,6 @@ public abstract class GlobalConst {
 
     public static final String X_USER_EMAIL_COOKIE_KEY = "x-user-email";
 
+    public static final String X_USER_EXP_COOKIE_KEY = "x-user-exp";
+
 }

@@ -1,29 +1,22 @@
 # 빌드 스테이지
-FROM gradle:8-jdk21 AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 
-# Gradle 캐시를 활용하기 위해 의존성 파일 먼저 복사
-COPY build.gradle settings.gradle ./
-COPY module-global/build.gradle ./module-global/
-COPY module-chat/build.gradle ./module-chat/
+COPY module-chat/package.json module-chat/package-lock.json ./
+RUN npm ci
 
-# 의존성 다운로드 (캐시 활용)
-RUN gradle :module-chat:dependencies --no-daemon || true
-
-# 소스 코드 복사
-COPY . .
-
-# JAR 빌드
-RUN gradle :module-chat:bootJar --no-daemon
+COPY module-chat/ ./
+RUN npm run build
 
 # 실행 스테이지
-FROM eclipse-temurin:21-jre-alpine
+FROM node:22-alpine
 WORKDIR /app
 
-# 빌드된 JAR 복사
-COPY --from=build /app/module-chat/build/libs/*.jar app.jar
+COPY module-chat/package.json module-chat/package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY --from=build /app/dist ./dist
 
 EXPOSE 8083
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
+CMD ["node", "dist/main.js"]

@@ -84,6 +84,13 @@ spring:
               filters:
                 - StripPrefix=0
 
+            - id: chat-service-socket
+              uri: ${CHAT_SERVICE_URI:http://chat-service:8083}
+              predicates:
+                - Path=/socket.io/**
+              filters:
+                - StripPrefix=0
+
 # ============================================
 # JWT 설정
 # ============================================

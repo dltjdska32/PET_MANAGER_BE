@@ -3,8 +3,9 @@ server:
   servlet:
     context-path: /api/feed
   tomcat:
-    max-swallow-size: -1
-    max-http-form-post-size: -1
+    max-swallow-size: -1         # 한도 초과 시 톰캣이 요청 본문을 "삼키지" 않게 함 (-1 = 무제한)
+    max-http-form-post-size: -1  # form post 자체의 한도 제거 (Spring multipart 한도에 위임)
+
 
 logging:
   level:
@@ -43,9 +44,9 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 20MB
-      max-request-size: 100MB
-      file-size-threshold: 2MB
+      max-file-size: 20MB   # 파일 1개 최대크기
+      max-request-size: 100MB # 멀티파트요청 전체 크기 제한
+      file-size-threshold: 2MB # 이 크기 넘어가면 디스크에 임시 저장 
 
 
   data:
@@ -73,3 +74,5 @@ redis:
       max-deliveries: 5
       dlq-stream-key: auth-events-dlq
       fixed-delay-ms: 5000
+
+# feed-chat-events: GlobalConst.FEED_CHAT_STREAM_KEY — 피드 아웃박스 스케줄러가 발행, module-chat FeedSyncStreamConsumer 가 구독

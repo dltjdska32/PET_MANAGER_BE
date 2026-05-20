@@ -231,6 +231,8 @@ public class AuthService {
         String urls = s3ImgUploader.uploadFile(dto.userProfileImgs().get(0), GlobalConst.AUTH_IMG_DIR);
 
         userService.upsertUserImg(user.userId(), urls);
+
+        outboxPort.saveEvent(new UserProfileImgUpdatedEvent(user.userId(), urls));
     }
 
     public void validOtp(ValidateOtpDto dto) {

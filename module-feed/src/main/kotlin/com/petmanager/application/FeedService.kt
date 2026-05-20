@@ -8,8 +8,10 @@ import com.petmanager.application.exception.FeedException
 import com.petmanager.config.GlobalConst
 import com.petmanager.domain.Feed
 import com.petmanager.dto.BasicUserInfo
+import com.petmanager.application.event.EventType
 import com.petmanager.infra.mongo.FeedLikeRepo
 import com.petmanager.infra.mongo.FeedRepo
+import com.petmanager.infra.outbox.FeedChatSyncPayload
 import com.petmanager.util.S3ImgUploader
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
@@ -22,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional
 class FeedService(
     private val feedRepo: FeedRepo,
     private val feedLikeRepo: FeedLikeRepo,
-    private val s3ImgUploader: S3ImgUploader
+    private val s3ImgUploader: S3ImgUploader,
+    private val feedChatOutboxWriter: FeedChatOutboxWriter,
 ) {
 
 
@@ -45,6 +48,12 @@ class FeedService(
 
         feed.delete()
         feedRepo.save(feed)
+
+        /// 삭제 이벤트 아웃박스 저장.
+        feedChatOutboxWriter.enqueue(
+            EventType.DELETED_FEED,
+            FeedChatSyncPayload.from(feed),
+        )
     }
 
     /**
@@ -73,7 +82,7 @@ class FeedService(
     }
 
     /**
-     * 피드 업서트
+     * 피드 업서트 (트랜잭션 경계 )
      */
     @Transactional(readOnly = false)
     fun upsertFeed(req: UpsertFeedReqDto, user: BasicUserInfo) {
@@ -113,7 +122,13 @@ class FeedService(
             feedType = req.feedType
         )
 
-        feedRepo.save(feed)
+        val saved = feedRepo.save(feed)
+
+        /// 아웃박스 저장.
+        feedChatOutboxWriter.enqueue(
+            EventType.CREATED_FEED,
+            FeedChatSyncPayload.from(saved),
+        )
     }
 
     /**
@@ -134,13 +149,22 @@ class FeedService(
             throw FeedException.notFound("이미 삭제된 피드는 수정할 수 없습니다.")
         }
 
-        // 기존 이미지 URL 백업
-        val oldImgs = feed.mainImgUrl + feed.sideImgUrl
+        // 기존 이미지 URL 백업 (교체 시에만 S3 삭제)
+        val previousMainImgs = feed.mainImgUrl
+        val previousSideImgs = feed.sideImgUrl
 
         // 신규 업로드 및 토큰 생성
         val tokens = Feed.generateTokens(req.title)
-        val savedMainImgs = s3ImgUploader.uploadFiles(req.mainImgs, GlobalConst.FEED_IMG_DIR)
-        val savedSideImgs = s3ImgUploader.uploadFiles(req.sideImgs, GlobalConst.FEED_IMG_DIR)
+        val savedMainImgs = if (req.mainImgs.isNotEmpty()) {
+            s3ImgUploader.uploadFiles(req.mainImgs, GlobalConst.FEED_IMG_DIR)
+        } else {
+            previousMainImgs
+        }
+        val savedSideImgs = if (req.sideImgs.isNotEmpty()) {
+            s3ImgUploader.uploadFiles(req.sideImgs, GlobalConst.FEED_IMG_DIR)
+        } else {
+            previousSideImgs
+        }
 
         feed.update(
             title = req.title,
@@ -157,8 +181,19 @@ class FeedService(
 
         feedRepo.save(feed)
 
-        // S3 기존 파일 정리
-        s3ImgUploader.deleteFiles(oldImgs)
+        /// 아웃박스 저장.
+        feedChatOutboxWriter.enqueue(
+            EventType.UPDATED_FEED,
+            FeedChatSyncPayload.from(feed),
+        )
+
+        // 교체된 이미지만 S3 정리
+        if (req.mainImgs.isNotEmpty()) {
+            s3ImgUploader.deleteFiles(previousMainImgs)
+        }
+        if (req.sideImgs.isNotEmpty()) {
+            s3ImgUploader.deleteFiles(previousSideImgs)
+        }
     }
 
     /**

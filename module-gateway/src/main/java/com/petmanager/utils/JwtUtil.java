@@ -130,5 +130,11 @@ public class JwtUtil {
 
         return username;
     }
+
+    /// 토큰 만료 시각 
+    public Long getExpiration(String token){
+        Claims claims = getClaims(token);
+        return claims.getExpiration().getTime();
+    }
 }
 

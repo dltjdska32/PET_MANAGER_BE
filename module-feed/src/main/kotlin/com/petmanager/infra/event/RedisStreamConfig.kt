@@ -38,7 +38,8 @@ class RedisStreamConfig(
 
         val options = StreamMessageListenerContainer.StreamMessageListenerContainerOptions
             .builder()
-            .pollTimeout(Duration.ofSeconds(1))
+            .pollTimeout(Duration.ofSeconds(5)) /// 메시지 없을경우 5초 대기
+            .batchSize(50) /// 50개씩 처리
             .build()
 
         val container = StreamMessageListenerContainer.create(factory, options)

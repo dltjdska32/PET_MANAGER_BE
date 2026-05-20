@@ -35,6 +35,7 @@ public class UserHeaderFilter extends OncePerRequestFilter {
         String username = request.getHeader(X_USER_NAME_COOKIE_KEY);
         String role = request.getHeader(X_USER_ROLE_COOKIE_KEY);
         String email =  request.getHeader(X_USER_EMAIL_COOKIE_KEY);
+        String exp = request.getHeader(X_USER_EXP_COOKIE_KEY);
 
         ///  해당 필터에 거치지 않으면 게스트 유저
         if (strUserId != null) {

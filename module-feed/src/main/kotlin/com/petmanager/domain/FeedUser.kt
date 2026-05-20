@@ -7,8 +7,11 @@ import org.springframework.data.mongodb.core.mapping.Document
 data class FeedUser(
     @Id
     val userId: Long,
+    val username: String,
     val email: String,
     val nickname: String,
-    val regionIds: List<Long> = emptyList()
+    val role: String = "ROLE_USER",
+    val userMainImgUrl: String? = null,
+    val regionIds: List<Long> = emptyList(),
 ) {
 }

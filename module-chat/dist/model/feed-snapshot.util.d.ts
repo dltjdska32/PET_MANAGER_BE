@@ -1,0 +1,41 @@
+import { FeedInfo } from '../model/chat-rooms.schema';
+export interface FeedChatSyncPayload {
+    id: string;
+    authorId: string;
+    username?: string;
+    authorNickname?: string;
+    title?: string;
+    description?: string;
+    regionId?: number;
+    mainImgUrl?: string[];
+    sideImgUrl?: string[];
+    pay?: number;
+    startDate?: string | null;
+    endDate?: string | null;
+    likesCount?: number;
+    feedType?: string;
+    createdAt?: string | null;
+    updatedAt?: string | null;
+    isDeleted?: boolean;
+}
+export declare function buildFeedSyncDocumentSet(payload: FeedChatSyncPayload): Record<string, unknown>;
+export declare function buildFeedInfoFromPayload(payload: FeedChatSyncPayload): FeedInfo;
+export declare function buildFeedInfoFromFeedSync(feedSync: {
+    feedId: string;
+    authorId: string;
+    username?: string;
+    authorNickname: string;
+    title: string;
+    description?: string;
+    regionId?: number;
+    mainImgUrl?: string[];
+    sideImgUrl?: string[];
+    pay?: number;
+    startDate?: Date;
+    endDate?: Date;
+    likesCount?: number;
+    feedType?: string;
+    feedCreatedAt?: Date;
+    feedUpdatedAt?: Date;
+}): FeedInfo;
+export declare function buildChatRoomFeedInfoSet(payload: FeedChatSyncPayload): Record<string, unknown>;
