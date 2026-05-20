@@ -136,6 +136,7 @@ public class OutBoxEventPublishScheduler {
             case USER_REGIONS_UPSERTED -> obm.readValue(eventValue, UserRegionUpsertedEvent.class);
             case USER_NICKNAME_UPDATED -> obm.readValue(eventValue, UserNicknameUpdatedEvent.class);
             case USER_REGION_DELETED -> obm.readValue(eventValue, UserRegionDeletedEvent.class);
+            case USER_PROFILE_IMG_UPDATED -> obm.readValue(eventValue, UserProfileImgUpdatedEvent.class);
             default -> throw new IllegalArgumentException("확인할 수 없는 타입 : " + eventType);
         };
     }

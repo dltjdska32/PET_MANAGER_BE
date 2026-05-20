@@ -76,6 +76,7 @@ class FeedEventService (
         val updatedUser = foundUser.copy(nickname = nickName)
 
         feedUserRepo.save(updatedUser)
+        feedRepo.updateAuthorNicknameByAuthorId(userId.toString(), nickName)
     }
 
     @Transactional(readOnly = false)
@@ -90,6 +91,18 @@ class FeedEventService (
         val updatedUser = foundUser.copy(regionIds = regionIds)
 
         feedUserRepo.save(updatedUser)
+    }
+
+    @Transactional(readOnly = false)
+    fun userProfileImgUpdatedEvent(userId: Long, userMainImgUrl: String) {
+
+        val foundUser = feedUserRepo.findById(userId).orElse(null)
+        if (foundUser == null) {
+            log.warn("[유저 프로필 이미지 변경 이벤트] 확인할 수 없는 유저 : userId={}", userId)
+            return
+        }
+
+        feedUserRepo.save(foundUser.copy(userMainImgUrl = userMainImgUrl))
     }
 
 

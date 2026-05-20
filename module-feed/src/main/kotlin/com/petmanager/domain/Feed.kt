@@ -12,7 +12,7 @@ import java.time.LocalDateTime
 
 @Document(collection = "feed")
 data class Feed(
-    @Id
+    @field:Id
     var id: String? = null,
 
     val authorId: String,

@@ -1,0 +1,1 @@
+{"version":3,"file":"join-chat-room.req.dto.js","sourceRoot":"","sources":["../../src/dtos/join-chat-room.req.dto.ts"],"names":[],"mappings":";;;AAAA,MAAa,kBAAkB;IAEP;IACA;IACA;IAHpB,YACoB,MAAc,EACd,YAAqB,EACrB,MAAe;QAFf,WAAM,GAAN,MAAM,CAAQ;QACd,iBAAY,GAAZ,YAAY,CAAS;QACrB,WAAM,GAAN,MAAM,CAAS;IAEnC,CAAC;CACJ;AAPD,gDAOC"}

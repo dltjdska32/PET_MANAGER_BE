@@ -45,6 +45,7 @@ public class UserInfoHeaderFilter implements GlobalFilter {
         String userRole = jwtUtil.getUserRole(token);
         String username = jwtUtil.getUsername(token);
         String userEmail = jwtUtil.getUserEmail(token);
+        Long expMillis = jwtUtil.getExpiration(token);
 
         /// 헤더에 유저 정보 담아준다. (요청 mutate — 프록시 전달에 반영되도록)
         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
@@ -52,6 +53,7 @@ public class UserInfoHeaderFilter implements GlobalFilter {
                 .header(X_USER_ROLE_COOKIE_KEY, userRole)
                 .header(X_USER_NAME_COOKIE_KEY, username)
                 .header(X_USER_EMAIL_COOKIE_KEY, userEmail)
+                .header(X_USER_EXP_COOKIE_KEY, expMillis.toString())
                 .build();
         ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
 

@@ -72,3 +72,4 @@ out/
 
 # 문서 (로컬 전용)
 docs/
+node_modules

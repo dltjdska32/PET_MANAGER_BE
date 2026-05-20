@@ -1,24 +1,11 @@
-# ============================================
-# Chat Service CI/CD Pipeline
-# ============================================
-# module-chat, module-global 변경 시에만 실행됩니다.
-#
-# [필수 GitHub Secrets]
-# - DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
-# - EC2_HOST_CHAT (Chat 서버 IP, 예: 52.78.209.66)
-# - EC2_USER, EC2_SSH_KEY
-
 name: Chat Service CI/CD
 
 on:
-#  push:
-#    branches:
-#      - main
-#      - dev
-#    paths:
-#      - 'module-chat/**'
-#      - 'module-global/**'
-#      - '.github/workflows/chat-ci.yml'
+  # push:
+  #   branches: [main, dev]
+  #   paths:
+  #     - 'module-chat/**'
+  #     - '.github/workflows/chat-ci.yml'
 
   workflow_dispatch:
     inputs:
@@ -32,105 +19,56 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    outputs:
-      version: ${{ steps.set-version.outputs.VERSION_NAME }}
-      jar-path: ${{ steps.build.outputs.JAR_PATH }}
-
     steps:
       - name: Set Version Name
         id: set-version
         run: |
           VERSION_TAG="${{ github.event.inputs.tags || 'latest' }}"
-          VERSION_NAME=$(echo "$VERSION_TAG" | sed "s/\./\-/g")
+          VERSION_NAME=$(echo "$VERSION_TAG" | sed 's/\./-/g')
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
-          echo "버전명 설정: $VERSION_NAME"
 
       - name: Checkout Source Code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.tags || github.ref }}
 
-      - name: Grant Execute Permission for Gradlew
-        run: chmod +x gradlew
-
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
+      # 선택: Docker 빌드 전 TS 컴파일 검증
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: module-chat/package-lock.json
 
       - name: Build Chat Module
-        id: build
+        working-directory: module-chat
         run: |
-          echo "Chat 모듈 빌드 시작..."
-          ./gradlew :module-chat:clean :module-chat:bootJar -x test
-          
-          JAR_PATH="module-chat/build/libs/module-chat-0.0.1-SNAPSHOT.jar"
-          if [ -f "$JAR_PATH" ]; then
-            echo "JAR_PATH=$JAR_PATH" >> $GITHUB_OUTPUT
-            echo "빌드 완료: $JAR_PATH"
-          else
-            echo "빌드 실패: JAR 파일을 찾을 수 없습니다"
-            exit 1
-          fi
-        env:
-          SPRING_PROFILES_ACTIVE: prod
-
-      - name: Rename JAR with Version
-        run: |
-          cd module-chat/build/libs
-          OLD_JAR="module-chat-0.0.1-SNAPSHOT.jar"
-          NEW_JAR="module-chat-${{ steps.set-version.outputs.VERSION_NAME }}.jar"
-          
-          if [ -f "$OLD_JAR" ]; then
-            mv "$OLD_JAR" "$NEW_JAR"
-            echo "파일명 변경: $OLD_JAR -> $NEW_JAR"
-          else
-            echo "JAR 파일을 찾을 수 없습니다: $OLD_JAR"
-            exit 1
-          fi
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: chat-service-${{ steps.set-version.outputs.VERSION_NAME }}
-          path: module-chat/build/libs/module-chat-${{ steps.set-version.outputs.VERSION_NAME }}.jar
-          retention-days: 7
+          npm ci
+          npm run build
 
       - name: Build Docker Image
-        if: success()
         run: |
-          echo "Docker 이미지 빌드 시작..."
-          docker build -f module-chat/Dockerfile -t pet-manager-chat:${{ steps.set-version.outputs.VERSION_NAME }} .
-          docker build -f module-chat/Dockerfile -t pet-manager-chat:latest .
-          echo "Docker 이미지 빌드 완료"
-        env:
-          SPRING_PROFILES_ACTIVE: prod
+          docker build -f module-chat/Dockerfile \
+            -t pet-manager-chat:${{ steps.set-version.outputs.VERSION_NAME }} \
+            -t pet-manager-chat:latest .
 
       - name: Login to Docker Hub
-        if: success()
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push to Docker Hub
-        if: success()
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           DOCKER_USER=$(echo -n "$DOCKER_USER" | tr -d '\r\n\t ' | tr '[:upper:]' '[:lower:]')
-          if [ -z "$DOCKER_USER" ]; then
-            echo "::error::DOCKERHUB_USERNAME 시크릿이 비어있습니다. GitHub Settings > Secrets에서 설정하세요."
-            exit 1
-          fi
           IMAGE_BASE="${DOCKER_USER}/pet-manager-chat"
-          echo "Docker Hub에 이미지 푸시..."
           docker tag pet-manager-chat:latest ${IMAGE_BASE}:latest
-          docker tag pet-manager-chat:${{ steps.set-version.outputs.VERSION_NAME }} ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
+          docker tag pet-manager-chat:${{ steps.set-version.outputs.VERSION_NAME }} \
+            ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
           docker push ${IMAGE_BASE}:latest
           docker push ${IMAGE_BASE}:${{ steps.set-version.outputs.VERSION_NAME }}
-          echo "Docker Hub 푸시 완료"
 
       - name: Deploy to EC2 (Chat)
         if: success() && github.event_name == 'workflow_dispatch'
@@ -138,27 +76,44 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          MONGODB_URI: ${{ secrets.CHAT_MONGODB_URI }}
+          REDIS_URL: ${{ secrets.CHAT_REDIS_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          AWS_CREDENTIALS_ACCESS_KEY: ${{ secrets.AWS_S3_ACCESS_KEY }}
+          AWS_CREDENTIALS_SECRET_KEY: ${{ secrets.AWS_S3_SECRET_KEY }}
+          AWS_REGION: ${{ secrets.AWS_S3_REGION }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
         with:
           host: ${{ secrets.EC2_HOST_CHAT }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN
+          command_timeout: 5m
+          envs: >-
+            DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,MONGODB_URI,REDIS_URL,JWT_SECRET,
+            AWS_CREDENTIALS_ACCESS_KEY,AWS_CREDENTIALS_SECRET_KEY,AWS_REGION,AWS_S3_BUCKET
           script: |
-            echo "Docker Hub 로그인..."
+            set -e
             echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            
-            echo "Chat 이미지 Pull 및 컨테이너 재시작..."
+
+            docker network create pet-manager-network 2>/dev/null || true
             docker pull $DOCKERHUB_USERNAME/pet-manager-chat:latest
-            
+
             docker stop pet-manager-chat 2>/dev/null || true
             docker rm pet-manager-chat 2>/dev/null || true
-            
+
             docker run -d \
               --name pet-manager-chat \
               --restart always \
               -p 8083:8083 \
               --network pet-manager-network \
-              -e SPRING_PROFILES_ACTIVE=prod \
+              -e MONGODB_URI="$MONGODB_URI" \
+              -e REDIS_URL="$REDIS_URL" \
+              -e JWT_SECRET="$JWT_SECRET" \
+              -e AWS_CREDENTIALS_ACCESS_KEY="$AWS_CREDENTIALS_ACCESS_KEY" \
+              -e AWS_CREDENTIALS_SECRET_KEY="$AWS_CREDENTIALS_SECRET_KEY" \
+              -e AWS_REGION="$AWS_REGION" \
+              -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
               $DOCKERHUB_USERNAME/pet-manager-chat:latest
-            
+
             echo "Chat 배포 완료"
+            docker logs pet-manager-chat --tail 30

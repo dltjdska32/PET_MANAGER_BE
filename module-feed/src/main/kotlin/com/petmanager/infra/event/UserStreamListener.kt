@@ -43,9 +43,13 @@ class UserStreamListener(
 
                 val userId = jsonNode.get("userId")?.asLong() ?: return
 
-                // UserCreatedEvent 구조에 맞게 (email, nickname, regionIds) 추출
+                val username = jsonNode.get("username")?.asText() ?: ""
                 val email = jsonNode.get("email")?.asText() ?: ""
                 val nickname = jsonNode.get("nickname")?.asText() ?: "unknown"
+                val role = jsonNode.get("role")?.asText() ?: "ROLE_USER"
+                val userMainImgUrl = jsonNode.get("userMainImgUrl")?.let { node ->
+                    if (node.isNull) null else node.asText()
+                }
 
                 val regionIdsNode = jsonNode.get("regionIds")
                 val regionIds: List<Long> = if (regionIdsNode != null && regionIdsNode.isArray) {
@@ -57,9 +61,12 @@ class UserStreamListener(
                 feedEventService.createdUserEvent(
                     FeedUser(
                         userId = userId,
+                        username = username,
                         email = email,
                         nickname = nickname,
-                        regionIds = regionIds
+                        role = role,
+                        userMainImgUrl = userMainImgUrl,
+                        regionIds = regionIds,
                     )
                 )
             }
@@ -103,6 +110,15 @@ class UserStreamListener(
                 }
 
                 feedEventService.userRegionUpsertedEvent(userId, regionIds)
+            }
+
+            // 유저 프로필 이미지 변경
+            if (eventType == UserEventType.USER_PROFILE_IMG_UPDATED.name) {
+                val jsonNode = objectMapper.readTree(eventValue)
+                val userId = jsonNode.get("userId")?.asLong() ?: return
+                val userMainImgUrl = jsonNode.get("userMainImgUrl")?.asText() ?: return
+
+                feedEventService.userProfileImgUpdatedEvent(userId, userMainImgUrl)
             }
 
             // 처리 성공으로  ACK 처리

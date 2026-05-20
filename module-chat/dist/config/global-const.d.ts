@@ -1,0 +1,27 @@
+export declare const GlobalConst: {
+    readonly DEVICE_ID_HEADER_PREFIX: "device-id";
+    readonly AUTHORIZATION_HEADER: "Authorization";
+    readonly AUTHORIZATION_HEADER_TYPE: "Bearer ";
+    readonly TOKEN_PREFIX: "RT:";
+    readonly REFRESH_TOKEN_COOKIE_KEY: "Refresh-Token";
+    readonly JWT_CLAIM_ROLE: "role";
+    readonly JWT_CLAIM_USERNAME: "username";
+    readonly JWT_CLAIM_EMAIL: "email";
+    readonly JWT_CLAIM_EXP: "exp";
+    readonly X_USER_ID_COOKIE_KEY: "x-user-id";
+    readonly X_USER_EXP_COOKIE_KEY: "x-user-exp";
+    readonly X_USER_ROLE_COOKIE_KEY: "x-user-role";
+    readonly X_USER_NAME_COOKIE_KEY: "x-user-name";
+    readonly X_USER_EMAIL_COOKIE_KEY: "x-user-email";
+    readonly AUTH_STREAM_KEY: "auth-events";
+    readonly FEED_CHAT_STREAM_KEY: "feed-chat-events";
+    readonly FEED_CONSUMER_GROUP: "feed-service-group";
+    readonly CHAT_CONSUMER_GROUP: "chat-service-group";
+    readonly CHAT_FEED_SYNC_GROUP: "chat-feed-sync-group";
+    readonly CHAT_FEED_SYNC_CONSUMER_NAME: "chat-feed-sync-1";
+    readonly CHAT_CONSUMER_GROUP_NAME: "chat-service-group-1";
+    readonly FEED_IMG_DIR: "feed-img";
+    readonly AUTH_IMG_DIR: "auth-img";
+    readonly CHAT_FILE_DIR: "chat-files";
+};
+export type GlobalConstKey = keyof typeof GlobalConst;

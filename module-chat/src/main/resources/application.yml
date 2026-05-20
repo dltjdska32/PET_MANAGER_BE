@@ -1,9 +1,0 @@
-server:
-  port: 8083
-  context-path: /api/chat
-
-spring:
-  application:
-    name: module-chat
-
-

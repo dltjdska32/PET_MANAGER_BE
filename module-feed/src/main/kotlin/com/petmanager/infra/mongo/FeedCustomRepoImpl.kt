@@ -111,4 +111,10 @@ class FeedCustomRepoImpl(
         val update = Update().inc("likesCount", count)
         mongoTemplate.updateFirst(query, update, "feed")
     }
+
+    override fun updateAuthorNicknameByAuthorId(authorId: String, authorNickname: String) {
+        val query = Query(Criteria.where("authorId").`is`(authorId))
+        val update = Update().set("authorNickname", authorNickname)
+        mongoTemplate.updateMulti(query, update, Feed::class.java)
+    }
 }
