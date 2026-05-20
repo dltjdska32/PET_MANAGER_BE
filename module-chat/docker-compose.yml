@@ -13,8 +13,8 @@ services:
       - .env
     environment:
       # env_file(127.0.0.1) 대신 Docker 네트워크 호스트명 사용
-      MONGODB_URI: mongodb://lsn:petmanager3448%21%21@pet-manager-mongodb:27017/pet_manager_chat?authSource=admin&replicaSet=rs0
-      REDIS_URL: redis://:petmanager3448%21%21@pet-manager-redis:6379
+      MONGODB_URI: ${MONGODB_URI}
+      REDIS_URL: redis://:${REDIS_PASS}@${REDIS_HOST}:${REDIS_PORT}
       JWT_SECRET: ${JWT_SECRET}
       AWS_CREDENTIALS_ACCESS_KEY: ${AWS_CREDENTIALS_ACCESS_KEY}
       AWS_CREDENTIALS_SECRET_KEY: ${AWS_CREDENTIALS_SECRET_KEY}
