@@ -11,6 +11,8 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 
 ---
 
+<br>
+
 ## 🏗 Architecture
 
 ### 📐 전체 아키텍처
