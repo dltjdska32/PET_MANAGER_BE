@@ -29,6 +29,7 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 <br>
 
 ## auth
+    - 기술스택 
     - Spring + JAVA + MySQL + Redis
     
     - 인증 / 인가 및 유저 관련 로직 처리 서버
@@ -51,6 +52,7 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 <br> 
 
 ## feed
+    -기술스택
     - Spring + kotlin + MongoDB + Redis
     
     - 게시글 조회 및 등록 로직 처리 서버
@@ -71,7 +73,8 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 <br>
 
 ## chat
-    - Nest.js + Typescript + MongoDB + Redis 
+    - 기술 스택
+    - Nest.js + Typescript + MongoDB + Redis + mongoose + websocket
 
     - node 기반 비동기 논블로킹 서버를 통해 최소한의 자원을 통해 WS 및 HTTP 통신 최적화
 
@@ -87,7 +90,7 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 
 ## Redis-Stream
 
-(이미지) ~~~~
+![auth-feed 스트림 구조](./auth-feed_레디스스트림.png)
 
 - Auth 서버 -> Feed 서버
    - Auth 서버는 데이터 Create, Update, Delete 상황에서 해당 정보를 Outbox테이블에 저장 후, 스케줄러를 통해 레디스 스트림에 이벤트 발행
@@ -101,7 +104,8 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 
  <br>
 
- 이미지 ~~~
+![auth- chat 스트림 구조](./auth-chat 레디스스트림.png)
+
 
  - Auth 서버 -> Feed 서버
    - Auth 서버는 데이터 Create, Update, Delete 상황에서 해당 정보를 Outbox테이블에 저장 후, 스케줄러를 통해 레디스 스트림에 이벤트 발행
@@ -112,9 +116,9 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
    - chat-consumer-retry가 xclaim으로 가져와 해당 이벤트 처리후 xack
    - 만약 pel 횟수가 10회 이상일경우 dlq 스트림에 저장.
 
- <br>
+ <br>Chat_feed 레디스스트림
 
- 이미지 ~~~
+![Chat_feed 레디스스트림](./Chat_feed 레디스스트림.png)
  - feed 서버 -> chat 서버 
    - Feed 서버는 데이터 Create, Update, Delete 상황에서 해당 정보를 Outbox테이블에 저장 후, 스케줄러를 통해 레디스 스트림에 이벤트 발행
    - feed-chat-events 키 아래에 여러 이벤트를 로그형식 (append only)로 쌓아둠
