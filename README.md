@@ -1,129 +1,174 @@
-# PET_MANAGER_BE
+# 🐾 PET_MANAGER_BE
 
 반려동물 케어 서비스 **백엔드** 레포입니다.  
-Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있으며,  Redis Stream 기반 이벤트 동기화를 진행합니다.
---- 
+Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있으며, **Redis Stream** 기반 이벤트 동기화를 진행합니다.
 
-
-# Architecture
-##전체 아키텍쳐
-![전체 아키텍처](./아키텍처.png)
-
-##채팅 아키텍쳐 
-![채팅 아키텍처](./채팅%20아키텍처.png)
----
-
-<br>
-
-# 서비스 설명
-
-## gatewayapi 
-    - Spring Cloud Gateway ( Spring-Webflux (netty) ) 
-
-    - 앱의 단일 진입점 역할
-   
-    - 논블로킹 비동기 처리를 통해 최소한의 자원으로 빠르게 요청을 각서버로 라우팅 
-   
-    - jwt를 통한 인증로직 전담.
-
-<br>
-
-## auth
-    - 기술스택 
-    - Spring + JAVA + MySQL + Redis
-    
-    - 인증 / 인가 및 유저 관련 로직 처리 서버
-        - JWT를 사용한 서버메모리 절약
-        - OAuth2 인증방식을 통한 UX 최적화
-        - RTR 방식을 통해 보안성 향상
-        - SMTP를 활용한 메일 인증을 통해 보안성 향상
-        - Bcrypt 암호화를 통한 보안성 향상 
-    
-    - DDD, Hexagonal 적용
-    
-    - Redis-Stream을 통해 feed, chat 서버에 유저 정보 발송 (EDA 적용)
-        - 각 서버에 필요한 유저 정보를 Redis-Stream을 통해 이벤트 발행 
-    
-    - Outbox를 적용하여 데이터 정합성 보장
-        - Redis-Stream을 통해 이벤트를 발송하기 직전 서버 에러 발생으로 인한 데이터 동기화 문제 방지
-    
-    - MySQL(RDB)를 활용하여 데이터 정합성 유지.
-
-<br> 
-
-## feed
-    -기술스택
-    - Spring + kotlin + MongoDB + Redis
-    
-    - 게시글 조회 및 등록 로직 처리 서버
-
-    - 가상스레드를 활용하여 복수의 파일 등록시 병렬로 데이터 저장 처리
-
-    - MongoDB를 활용하여 JSON형식으로 게시글 데이터 처리 (불필요한 조인 방지) 
-
-    - Redis-Stream을 통한 유저정보 동기화
-
-    - Redis-Stream을 통해 chat 서버에 피드 정보 발송 (EDA 적용)
-        - 채팅 서버에 필요한 피드 정보를 Redis-Stream을 통해 이벤트 발행 
-    
-    - Outbox를 적용하여 데이터 정합성 보장
-        - Redis-Stream을 통해 이벤트를 발송하기 직전 서버 에러 발생으로 인한 데이터 동기화 문제 방지
-    
-
-<br>
-
-## chat
-    - 기술 스택
-    - Nest.js + Typescript + MongoDB + Redis + mongoose + websocket
-
-    - node 기반 비동기 논블로킹 서버를 통해 최소한의 자원을 통해 WS 및 HTTP 통신 최적화
-
-    - Redis Pub/Sub을 사용하여 스케일 아웃시에도 실시간으로 채팅이 가능하도록 구현
-
-
+| 항목 | 내용 |
+|------|------|
+| Java | 21 · Spring Boot 3.5 |
+| Node | NestJS 11 |
+| 아키텍처 | MSA · DDD · Hexagonal · Outbox · EDA |
 
 ---
 
-<br>
+## 🏗 Architecture
 
-# 메시지 브로커 
+### 📐 전체 아키텍처
 
-## Redis-Stream
+<img src="./아키텍처.png" alt="전체 아키텍처" width="900" />
 
-![auth-feed 스트림 구조](./auth-feed_레디스스트림.png)
+### 💬 채팅 아키텍처
 
-- Auth 서버 -> Feed 서버
-   - Auth 서버는 데이터 Create, Update, Delete 상황에서 해당 정보를 Outbox테이블에 저장 후, 스케줄러를 통해 레디스 스트림에 이벤트 발행
-   - auth-events 키 아래에 여러 이벤트를 로그형식 (append only)로 쌓아둠
-   - consumer-group으로 feed-service-group을 두고 feed-consumer 과 feed-consumer-retry 컨슈머 두가지를 둠
-   - feed-consumer의 경우 auth-events의 로그를 가져와 pel에 저장하고 xack 처리
-   - 만약 1분간 xack 처리 되지않는다면 서버에 문제가 생긴것으로 간주.
-   - feed-consumer-retry가 xclaim으로 가져와 해당 이벤트 처리후 xack
-   - 만약 pel 횟수가 10회 이상일경우 dlq 스트림에 저장.
- 
+<img src="./채팅%20아키텍처.png" alt="채팅 아키텍처" width="900" />
 
- <br>
+---
 
-![auth- chat 스트림 구조](./auth-chat 레디스스트림.png)
+## 🖥 서비스 설명
 
+### 🚪 Gateway · `:8080`
 
- - Auth 서버 -> Feed 서버
-   - Auth 서버는 데이터 Create, Update, Delete 상황에서 해당 정보를 Outbox테이블에 저장 후, 스케줄러를 통해 레디스 스트림에 이벤트 발행
-   - auth-events 키 아래에 여러 이벤트를 로그형식 (append only)로 쌓아둠
-   - consumer-group으로 chat-service-group을 두고 chat-consumer 과 chat-consumer-retry 컨슈머 두가지를 둠
-   - chat-consumer의 경우 auth-events의 로그를 가져와 pel에 저장하고 xack 처리
-   - 만약 1분간 xack 처리 되지않는다면 서버에 문제가 생긴것으로 간주.
-   - chat-consumer-retry가 xclaim으로 가져와 해당 이벤트 처리후 xack
-   - 만약 pel 횟수가 10회 이상일경우 dlq 스트림에 저장.
+<p>
+  <img src="https://img.shields.io/badge/Spring_Cloud_Gateway-6DB33F?style=flat-square&logo=spring&logoColor=white" alt="Spring Cloud Gateway" />
+  <img src="https://img.shields.io/badge/WebFlux-6DB33F?style=flat-square&logo=spring&logoColor=white" alt="WebFlux" />
+  <img src="https://img.shields.io/badge/Netty-000000?style=flat-square&logo=netty&logoColor=white" alt="Netty" />
+  <img src="https://img.shields.io/badge/Java_21-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java 21" />
+  <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+</p>
 
- <br>Chat_feed 레디스스트림
+- 앱의 **단일 진입점** — `/api/auth`, `/api/feed`, `/api/chat`, `/socket.io` 라우팅
+- Netty 기반 **논블로킹** 비동기 처리로 최소 자원으로 요청 전달
+- **JWT 검증·인증** 로직 전담
 
-![Chat_feed 레디스스트림](./Chat_feed 레디스스트림.png)
- - feed 서버 -> chat 서버 
-   - Feed 서버는 데이터 Create, Update, Delete 상황에서 해당 정보를 Outbox테이블에 저장 후, 스케줄러를 통해 레디스 스트림에 이벤트 발행
-   - feed-chat-events 키 아래에 여러 이벤트를 로그형식 (append only)로 쌓아둠
-   - consumer-group으로 chat-feed-sync-group을 두고 chat-feed-sync 과 chat-consumer-retry 컨슈머 두가지를 둠
-   - chat-feed-sync의 경우 feed-chat-events의 로그를 가져와 pel에 저장하고 xack 처리
-   - 만약 1분간 xack 처리 되지않는다면 서버에 문제가 생긴것으로 간주.
-   - chat-consumer-retry가 xclaim으로 가져와 해당 이벤트 처리후 xack
-   - 만약 pel 횟수가 10회 이상일경우 dlq 스트림에 저장.
+---
+
+### 🔐 Auth · `:8081`
+
+<p>
+  <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot" />
+  <img src="https://img.shields.io/badge/Java_21-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java 21" />
+  <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL" />
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis" />
+  <img src="https://img.shields.io/badge/OAuth2-4285F4?style=flat-square&logo=google&logoColor=white" alt="OAuth2" />
+  <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+  <img src="https://img.shields.io/badge/DDD-512BD4?style=flat-square" alt="DDD" />
+  <img src="https://img.shields.io/badge/Hexagonal-512BD4?style=flat-square" alt="Hexagonal" />
+</p>
+
+**역할** — 인증 / 인가 및 유저 도메인
+
+- JWT + **RTR**(Refresh Token Rotation)로 서버 메모리 절약·보안 강화
+- OAuth2 소셜 로그인, SMTP 메일 인증, BCrypt 암호화
+- **MySQL Outbox** → 스케줄러가 `auth-events` Stream 발행
+- Feed / Chat에 유저 스냅샷 **EDA** 동기화
+
+---
+
+### 📰 Feed · `:8082`
+
+<p>
+  <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot" />
+  <img src="https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis" />
+  <img src="https://img.shields.io/badge/Virtual_Threads-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Virtual Threads" />
+  <img src="https://img.shields.io/badge/Outbox-512BD4?style=flat-square" alt="Outbox" />
+</p>
+
+**역할** — 게시글(피드) CRUD 및 미디어 처리
+
+- MongoDB 문서형 저장 — 불필요한 조인 방지
+- **가상 스레드**로 다중 파일 업로드 병렬 처리
+- `auth-events` 구독 → 로컬 유저 정보 동기화
+- **Mongo Outbox** → `feed-chat-events` Stream 발행 → Chat 피드 스냅샷 동기화
+
+---
+
+### 💬 Chat · `:8083`
+
+<p>
+  <img src="https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Mongoose-880000?style=flat-square&logo=mongodb&logoColor=white" alt="Mongoose" />
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis" />
+  <img src="https://img.shields.io/badge/Socket.IO-010101?style=flat-square&logo=socketdotio&logoColor=white" alt="Socket.IO" />
+  <img src="https://img.shields.io/badge/WebSocket-010101?style=flat-square&logo=socketdotio&logoColor=white" alt="WebSocket" />
+</p>
+
+**역할** — REST API + 실시간 채팅
+
+- Node.js 논블로킹 I/O로 HTTP · WebSocket 동시 처리
+- **Redis Pub/Sub** (`@socket.io/redis-adapter`) — Chat 서버 스케일 아웃 시에도 실시간 메시지 중계
+- Redis Stream으로 Auth 유저 · Feed 스냅샷 수신
+
+---
+
+## 📨 메시지 브로커
+
+### 🔴 Redis Stream
+
+> Stream = 서비스 간 **데이터 동기화** ·
+
+### 🔴 Redis Pub/Sub
+> Pub/Sub = 채팅 **실시간 중계** (역할 분리)
+
+---
+
+#### Auth → Feed · `auth-events`
+
+<img src="./auth-feed_레디스스트림.png" alt="auth-feed 스트림 구조" width="900" />
+
+| 항목 | 값 |
+|------|-----|
+| Stream Key | `auth-events` |
+| Consumer Group | `feed-service-group` |
+| Consumer | `feed-consumer-1` (읽기) · `feed-consumer-retry-1` (재시도) |
+| DLQ | `auth-events-dlq` |
+
+**흐름**
+
+1. Auth — CUD 발생 시 **Outbox(MySQL)** 저장 → 스케줄러가 Stream에 이벤트 발행
+2. `auth-events` 키 아래 append-only 로그 적재
+3. `feed-consumer-1` — `XREADGROUP` → 처리 → `XACK`
+4. 1분간 `XACK` 없으면 장애로 간주 → `feed-consumer-retry-1`이 `XCLAIM` 후 재처리
+5. PEL 전달 **5회** 초과 시 DLQ Stream 이동
+
+---
+
+#### Auth → Chat · `auth-events`
+
+<img src="./auth-chat%20레디스스트림.png" alt="auth-chat 스트림 구조" width="900" />
+
+| 항목 | 값 |
+|------|-----|
+| Stream Key | `auth-events` |
+| Consumer Group | `chat-service-group` |
+| Consumer | `chat-consumer-1` (읽기) · `chat-consumer-retry-1` (재시도) |
+| DLQ | `auth-events-dlq-chat` |
+
+**흐름**
+
+1. Auth — 동일 Outbox → `auth-events` 발행
+2. `chat-consumer-1` — `XREADGROUP` → 처리 → `XACK`
+3. 1분 idle → `chat-consumer-retry-1`이 `XCLAIM` 후 재처리
+4. PEL 전달 **10회** 초과 시 DLQ 이동
+
+---
+
+#### Feed → Chat · `feed-chat-events`
+
+<img src="./Chat_feed%20레디스스트림.png" alt="feed-chat 스트림 구조" width="900" />
+
+| 항목 | 값 |
+|------|-----|
+| Stream Key | `feed-chat-events` |
+| Consumer Group | `chat-feed-sync-group` |
+| Consumer | `chat-feed-sync-1` (읽기) · `chat-consumer-retry-1` (재시도) |
+| DLQ | `feed-chat-events-dlq-chat` |
+
+**흐름**
+
+1. Feed — CUD 발생 시 **Outbox(Mongo)** 저장 → 스케줄러가 Stream 발행
+2. `chat-feed-sync-1` — `XREADGROUP` → 처리 → `XACK`
+3. 1분 idle → `chat-consumer-retry-1`이 `XCLAIM` 후 재처리
+4. PEL 전달 **10회** 초과 시 DLQ 이동
