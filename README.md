@@ -132,7 +132,7 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 2. `auth-events` 키 아래 append-only 로그 적재
 3. `feed-consumer-1` — `XREADGROUP` → 처리 → `XACK`
 4. 1분간 `XACK` 없으면 장애로 간주 → `feed-consumer-retry-1`이 `XCLAIM` 후 재처리
-5. PEL 전달 **5회** 초과 시 DLQ Stream 이동
+5. PEL 전달 **10회** 초과 시 DLQ Stream 이동
 
 ---
 
