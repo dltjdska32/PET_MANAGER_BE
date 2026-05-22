@@ -1,9 +1,12 @@
 # PET_MANAGER_BE
 
-- 반려동물 케어 애플리케이션 
-- 마이크로 서비스 아키텍처(MSA)로 구현한 멀티 모듈 애플리케이션 
-- Http 통신 및 WS 통신 활용
-- MSA, DDD, EDA, Hexagonal 등 적용
+반려동물 케어 서비스 **백엔드** 레포입니다.  
+Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있으며,  Redis Stream 기반 이벤트 동기화를 진행합니다.
+
+- **MSA** — 역할 분리를 통한 효율적인 자원 활용 및 느슨한 결합 구조 적용
+- **HTTP / WebSocket** — Gateway 라우팅 + Socket.IO 실시간 채팅
+- **EDA** — Outbox + Redis Stream으로 Auth → Feed/Chat, Feed → Chat 데이터 동기화
+- **설계** — DDD, Hexagonal Architecture, Consumer Group / PEL 재시도
 
 --- 
 
