@@ -11,12 +11,7 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 
 ---
 
-<br>
-
 ## 🏗 Architecture
-
-### 📐 전체 아키텍처
-
 <img src="./아키텍처.png" alt="전체 아키텍처" width="900" />
 
 ### 💬 채팅 아키텍처
@@ -60,7 +55,8 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 
 - JWT + **RTR**(Refresh Token Rotation)로 서버 메모리 절약·보안 강화
 - OAuth2 소셜 로그인, SMTP 메일 인증, BCrypt 암호화
-- **MySQL Outbox** → 스케줄러가 `auth-events` Stream 발행 → Feed / Chat에 유저 스냅샷 **EDA** 동기화
+- **MySQL Outbox** → 스케줄러가 `auth-events` Stream 발행
+- Feed / Chat에 유저 스냅샷 **EDA** 동기화
 
 ---
 

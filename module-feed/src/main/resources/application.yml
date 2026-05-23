@@ -71,7 +71,7 @@ redis:
       consumer: feed-consumer-retry-1
       batch-size: 50
       min-idle-ms: 60000
-      max-deliveries: 5
+      max-deliveries: 10
       dlq-stream-key: auth-events-dlq
       fixed-delay-ms: 5000
 

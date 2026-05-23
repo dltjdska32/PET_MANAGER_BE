@@ -41,7 +41,7 @@ export const GlobalConst = {
 
   CHAT_FEED_SYNC_CONSUMER_NAME: 'chat-feed-sync-1',
 
-  CHAT_CONSUMER_GROUP_NAME: 'chat-service-group-1',
+  CHAT_CONSUMER_GROUP_NAME: 'chat-consumer-1',
 
   FEED_IMG_DIR: 'feed-img',
 
