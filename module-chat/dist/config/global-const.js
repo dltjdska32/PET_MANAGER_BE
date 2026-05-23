@@ -22,7 +22,7 @@ exports.GlobalConst = {
     CHAT_CONSUMER_GROUP: 'chat-service-group',
     CHAT_FEED_SYNC_GROUP: 'chat-feed-sync-group',
     CHAT_FEED_SYNC_CONSUMER_NAME: 'chat-feed-sync-1',
-    CHAT_CONSUMER_GROUP_NAME: 'chat-service-group-1',
+    CHAT_CONSUMER_GROUP_NAME: 'chat-consumer-1',
     FEED_IMG_DIR: 'feed-img',
     AUTH_IMG_DIR: 'auth-img',
     CHAT_FILE_DIR: 'chat-files',

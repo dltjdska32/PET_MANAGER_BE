@@ -19,7 +19,7 @@ export declare const GlobalConst: {
     readonly CHAT_CONSUMER_GROUP: "chat-service-group";
     readonly CHAT_FEED_SYNC_GROUP: "chat-feed-sync-group";
     readonly CHAT_FEED_SYNC_CONSUMER_NAME: "chat-feed-sync-1";
-    readonly CHAT_CONSUMER_GROUP_NAME: "chat-service-group-1";
+    readonly CHAT_CONSUMER_GROUP_NAME: "chat-consumer-1";
     readonly FEED_IMG_DIR: "feed-img";
     readonly AUTH_IMG_DIR: "auth-img";
     readonly CHAT_FILE_DIR: "chat-files";
