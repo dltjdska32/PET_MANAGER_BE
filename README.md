@@ -12,9 +12,6 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 ---
 
 ## 🏗 Architecture
-
-### 📐 전체 아키텍처
-
 <img src="./아키텍처.png" alt="전체 아키텍처" width="900" />
 
 ### 💬 채팅 아키텍처
