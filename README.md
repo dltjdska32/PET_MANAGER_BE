@@ -7,6 +7,24 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 
 ---
 
+
+### 🎬 시연 영상
+
+<div align="center">
+
+<a href="https://youtu.be/ZKUqKPWYMxk">
+  <img src="https://img.youtube.com/vi/NCUD25v__2g/maxresdefault.jpg" alt="우쭈쭈 시연 영상" width="600">
+</a>
+
+</div>
+
+
+<br>
+
+---
+
+
+
 ## 📚 Tech Stack
 
 ### Language & Runtime
