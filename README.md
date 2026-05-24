@@ -5,7 +5,8 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 
 <br>
 ---
-## Tech Skill
+
+## Tech Stack
 
 | 항목 | 내용 |
 |------|------|
