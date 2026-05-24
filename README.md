@@ -3,18 +3,88 @@
 반려동물 케어 서비스 **백엔드** 레포입니다.  
 Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있으며, **Redis Stream** 기반 이벤트 동기화를 진행합니다.
 
-| 항목 | 내용 |
-|------|------|
-| Java | 21 · Spring Boot 3.5 |
-| Node | NestJS 11 |
-| 아키텍처 | MSA · DDD · Hexagonal · Outbox · EDA |
+<br>
+
+---
+
+## 📚 Tech Stack
+
+### Language & Runtime
+<p>
+  <img src="https://img.shields.io/badge/Java_21-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java 21" />
+  <img src="https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
+</p>
+
+### Framework
+<p>
+  <img src="https://img.shields.io/badge/Spring_Boot_3.5-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot 3.5" />
+  <img src="https://img.shields.io/badge/Spring_Cloud_Gateway-6DB33F?style=flat-square&logo=spring&logoColor=white" alt="Spring Cloud Gateway" />
+  <img src="https://img.shields.io/badge/WebFlux-6DB33F?style=flat-square&logo=spring&logoColor=white" alt="WebFlux" />
+  <img src="https://img.shields.io/badge/NestJS_11-E0234E?style=flat-square&logo=nestjs&logoColor=white" alt="NestJS 11" />
+  <img src="https://img.shields.io/badge/Gradle-02303A?style=flat-square&logo=gradle&logoColor=white" alt="Gradle" />
+</p>
+
+### Database & Cache
+<p>
+  <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL" />
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Mongoose-880000?style=flat-square&logo=mongodb&logoColor=white" alt="Mongoose" />
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis" />
+  <img src="https://img.shields.io/badge/JPA_/_Hibernate-59666C?style=flat-square&logo=hibernate&logoColor=white" alt="JPA / Hibernate" />
+</p>
+
+### Messaging & Real-time
+<p>
+  <img src="https://img.shields.io/badge/Redis_Stream-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis Stream" />
+  <img src="https://img.shields.io/badge/Redis_Pub_Sub-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis Pub/Sub" />
+  <img src="https://img.shields.io/badge/Outbox_Pattern-512BD4?style=flat-square" alt="Outbox Pattern" />
+  <img src="https://img.shields.io/badge/EDA-512BD4?style=flat-square" alt="EDA" />
+  <img src="https://img.shields.io/badge/Socket.IO-010101?style=flat-square&logo=socketdotio&logoColor=white" alt="Socket.IO" />
+  <img src="https://img.shields.io/badge/WebSocket-010101?style=flat-square&logo=socketdotio&logoColor=white" alt="WebSocket" />
+</p>
+
+### Auth & Security
+<p>
+  <img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+  <img src="https://img.shields.io/badge/OAuth2-4285F4?style=flat-square&logo=google&logoColor=white" alt="OAuth2" />
+  <img src="https://img.shields.io/badge/Kakao_Login-FEE500?style=flat-square&logo=kakao&logoColor=black" alt="Kakao Login" />
+  <img src="https://img.shields.io/badge/BCrypt-512BD4?style=flat-square" alt="BCrypt" />
+  <img src="https://img.shields.io/badge/Spring_Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white" alt="Spring Security" />
+</p>
+
+### Architecture & Pattern
+<p>
+  <img src="https://img.shields.io/badge/MSA-512BD4?style=flat-square" alt="MSA" />
+  <img src="https://img.shields.io/badge/DDD-512BD4?style=flat-square" alt="DDD" />
+  <img src="https://img.shields.io/badge/Hexagonal-512BD4?style=flat-square" alt="Hexagonal Architecture" />
+  <img src="https://img.shields.io/badge/Consumer_Group-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Consumer Group" />
+  <img src="https://img.shields.io/badge/DLQ-512BD4?style=flat-square" alt="DLQ" />
+</p>
+
+### Infra & DevOps
+<p>
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Docker_Compose-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose" />
+  <img src="https://img.shields.io/badge/AWS_EC2-232F3E?style=flat-square&logo=amazonaws&logoColor=white" alt="AWS EC2" />
+  <img src="https://img.shields.io/badge/AWS_S3-569A31?style=flat-square&logo=amazons3&logoColor=white" alt="AWS S3" />
+  <img src="https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white" alt="Nginx" />
+  <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/Blue_Green_Deploy-512BD4?style=flat-square" alt="Blue/Green Deploy" />
+</p>
+
+### Etc
+<p>
+  <img src="https://img.shields.io/badge/Netty-000000?style=flat-square&logo=netty&logoColor=white" alt="Netty" />
+  <img src="https://img.shields.io/badge/Virtual_Threads-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Virtual Threads" />
+  <img src="https://img.shields.io/badge/SMTP-512BD4?style=flat-square" alt="SMTP" />
+  <img src="https://img.shields.io/badge/ioredis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="ioredis" />
+</p>
 
 ---
 
 ## 🏗 Architecture
-
-### 📐 전체 아키텍처
-
 <img src="./아키텍처.png" alt="전체 아키텍처" width="900" />
 
 ### 💬 채팅 아키텍처
