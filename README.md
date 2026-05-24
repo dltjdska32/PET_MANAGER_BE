@@ -59,7 +59,6 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
   <img src="https://img.shields.io/badge/MSA-512BD4?style=flat-square" alt="MSA" />
   <img src="https://img.shields.io/badge/DDD-512BD4?style=flat-square" alt="DDD" />
   <img src="https://img.shields.io/badge/Hexagonal-512BD4?style=flat-square" alt="Hexagonal Architecture" />
-  <img src="https://img.shields.io/badge/Consumer_Group-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Consumer Group" />
   <img src="https://img.shields.io/badge/DLQ-512BD4?style=flat-square" alt="DLQ" />
 </p>
 
@@ -79,7 +78,7 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
   <img src="https://img.shields.io/badge/Netty-000000?style=flat-square&logo=netty&logoColor=white" alt="Netty" />
   <img src="https://img.shields.io/badge/Virtual_Threads-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Virtual Threads" />
   <img src="https://img.shields.io/badge/SMTP-512BD4?style=flat-square" alt="SMTP" />
-  <img src="https://img.shields.io/badge/ioredis-DC382D?style=flat-square&logo=redis&logoColor=white" alt="ioredis" />
+
 </p>
 
 ---
