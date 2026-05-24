@@ -2,14 +2,20 @@
 
 반려동물 케어 서비스 **백엔드** 레포입니다.  
 Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있으며, **Redis Stream** 기반 이벤트 동기화를 진행합니다.
+---
+
+<br>
+
+## Tech Skill
 
 | 항목 | 내용 |
 |------|------|
 | Java | 21 · Spring Boot 3.5 |
 | Node | NestJS 11 |
 | 아키텍처 | MSA · DDD · Hexagonal · Outbox · EDA |
+----
 
----
+
 
 ## 🏗 Architecture
 <img src="./아키텍처.png" alt="전체 아키텍처" width="900" />
