@@ -164,7 +164,7 @@ Gateway · Auth · Feed · Chat 4개 마이크로서비스로 구성되어 있�
 **역할** — 게시글(피드) CRUD 및 미디어 처리
 
 - MongoDB 문서형 저장 — 불필요한 조인 방지
-- **가상 스레드**로 다중 파일 업로드 병렬 처리
+- **가상 스레드**로 다중 파일 업로드 병렬 처리 ([간단한 가상스레드 테스트](http://www.google.co.kr))
 - `auth-events` 구독 → 로컬 유저 정보 동기화
 - **Mongo Outbox** → `feed-chat-events` Stream 발행 → Chat 피드 스냅샷 동기화
 
